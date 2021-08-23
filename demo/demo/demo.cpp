@@ -24,34 +24,33 @@ int main(int argc, char *argv[])
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
     
+    // JSON-Port
     int json_port = find_int_arg(argc, argv, "-json_port", -1);
+  
+    // Net
     char *inputnet = find_char_arg(argc, argv, "-net", "yolo3_berkeley.rt");
-
     std::string net(inputnet);
 
-    std::string input = "../demo/yolo_test.mp4";
-    if (argc > 2)
-        input = argv[2];
-    char ntype = 'y';
-    if (argc > 3)
-        ntype = argv[3][0];
-    int n_classes = 80;
-    if (argc > 4)
-        n_classes = atoi(argv[4]);
-    int n_batch = 1;
-    if (argc > 5)
-        n_batch = atoi(argv[5]);
-    bool show = true;
-    if (argc > 6)
-        show = atoi(argv[6]);
-    if (argc > 7)
-        SAVE_RESULT = atoi(argv[7]);
-    int port = 0;
-    if (argc > 8)
-        port = atoi(argv[8]);
-    bool extyolo=false;
-    if(argc >9)
-        extyolo = atoi(argv[9]);
+    // Input 
+    char *inputvideo = find_char_arg(argc, argv, "-input", "../demo/yolo_test.mp4");
+    std::string input(inputvideo); 
+
+    //Net-Type  
+    char *input_ntype = find_char_arg(argc, argv, "-ntype", "y");
+    char ntype = input_ntype[0];
+
+    int n_classes = find_int_arg(argc, argv, "-n_classes", 80);
+    
+    int n_batch = find_int_arg(argc, argv, "-n_batch", 1);
+
+    int show = find_int_arg(argc, argv, "-show", 1);
+
+    int save = find_int_arg(argc, argv, "-save", 0);
+    SAVE_RESULT = save;
+
+    int mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", 0);
+  
+    int extyolo = find_int_arg(argc, argv, "-extyolo", 0); 
 
     if (n_batch < 1 || n_batch > 64)
         FatalError("Batch dim not supported");
@@ -143,9 +142,9 @@ int main(int argc, char *argv[])
         if (n_batch == 1 && SAVE_RESULT)
             resultVideo << frame;
 
-        if (port > 0)
+        if (mjpeg_port > 0)
         {
-            send_mjpeg(batch_frame[0], port, 400000, 40);
+            send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
         }
     }
 
