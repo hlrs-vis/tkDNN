@@ -73,6 +73,12 @@ DeformConv2d::DeformConv2d( Network *net, int out_ch, int deformable_group, int 
     
     output_dim.c = out_ch;
     initCUDNN();
+
+    if(this->deformableGroup != 1)
+        MACC = kernelH*kernelW*output_dim.c*output_dim.w*output_dim.h;
+    else
+        MACC = input_dim.c*kernelH*kernelW*output_dim.c*output_dim.w*output_dim.h;
+        
     //allocate data for infer result
     checkCuda( cudaMalloc(&dstData, output_dim.tot()*sizeof(dnnType)) );
 }
@@ -95,7 +101,7 @@ dnnType* DeformConv2d::infer(dataDim_t &dim, dnnType* srcData) {
     // split conv2d outputs into offset and mask
     checkCuda(cudaMemcpy(offset, output_conv, 2*chunk_dim*sizeof(dnnType), cudaMemcpyDeviceToDevice)); 
     checkCuda(cudaMemcpy(mask, output_conv + 2*chunk_dim, chunk_dim*sizeof(dnnType), cudaMemcpyDeviceToDevice)); 
-    // kernel sigmoide
+    // kernel sigmoid
     activationSIGMOIDForward(mask, mask, chunk_dim);
 
     // deformable convolution

@@ -4,7 +4,10 @@
 #include <iostream>
 #include <signal.h>
 #include <stdlib.h>
+#ifdef __linux__
 #include <unistd.h>
+#endif 
+
 #include <mutex>
 #include "utils.h"
 
@@ -16,7 +19,7 @@
 
 #include "tkdnn.h"
 
-// #define OPENCV_CUDACONTRIB //if OPENCV has been compiled with CUDA and contrib.
+//#define OPENCV_CUDACONTRIB //if OPENCV has been compiled with CUDA and contrib.
 
 #ifdef OPENCV_CUDACONTRIB
 #include <opencv2/cudawarping.hpp>
@@ -80,18 +83,18 @@ namespace tk
             DetectionNN(){};
             ~DetectionNN(){};
 
-            /**
-         * Method used to inialize the class, allocate memory and compute 
+        /**
+         * Method used to initialize the class, allocate memory and compute 
          * needed data.
          * 
-         * @param tensor_path path to the rt file og the NN.
+         * @param tensor_path path to the rt file of the NN.
          * @param n_classes number of classes for the given dataset.
          * @param n_batches maximum number of batches to use in inference
          * @return true if everything is correct, false otherwise.
          */
-            virtual bool init(const std::string &tensor_path, const int n_classes = 80, const int n_batches = 1) = 0;
-
-            /**
+        virtual bool init(const std::string& tensor_path, const int n_classes=80, const int n_batches=1, const float conf_thresh=0.3) = 0;
+        
+        /**
          * This method performs the whole detection of the NN.
          * 
          * @param frames frames to run detection on.
@@ -147,8 +150,8 @@ namespace tk
                     TKDNN_TSTART
                     for (int bi = 0; bi < cur_batches; ++bi)
                         postprocess(bi, mAP);
-                    TKDNN_TSTOP
-                    if (save_times)
+			    TKDNN_TSTOP
+			    if (save_times)
                         *times << t_ns << "\n";
                 }
             }
