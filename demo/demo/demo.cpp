@@ -23,10 +23,12 @@ int main(int argc, char *argv[])
 
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
+    
+    int json_port = find_int_arg(argc, argv, "-json_port", -1);
+    char *inputnet = find_char_arg(argc, argv, "-net", "yolo3_berkeley.rt");
 
-    std::string net = "yolo3_berkeley.rt";
-    if (argc > 1)
-        net = argv[1];
+    std::string net(inputnet);
+
     std::string input = "../demo/yolo_test.mp4";
     if (argc > 2)
         input = argv[2];
