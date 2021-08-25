@@ -99,11 +99,13 @@ int main(int argc, char *argv[])
     cv::Mat frame;
     if (show)
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
-    cv::moveWindow("detection", 0, 0);
-    cv::resizeWindow("detection", 1352, 1013);
+    cv::moveWindow("detection", 100, 100);
+    cv::resizeWindow("detection", 640, 480);
 
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
+
+    long long int frame_id = 0;
 
     while (gRun)
     {
@@ -145,6 +147,12 @@ int main(int argc, char *argv[])
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
+        }
+        
+        if (json_port > 0)
+        {
+            send_json(batch_frame, *detNN, frame_id, json_port, 40000);
+            frame_id++;
         }
     }
 
