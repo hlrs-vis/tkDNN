@@ -50,7 +50,9 @@ int main(int argc, char *argv[])
 
     int mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", 0);
   
-    int extyolo = find_int_arg(argc, argv, "-extyolo", 0); 
+    int extyolo = find_int_arg(argc, argv, "-extyolo", 0);
+
+    int video_mode = find_int_arg(argc, argv, "-video_mode", 0);
 
     if (n_batch < 1 || n_batch > 64)
         FatalError("Batch dim not supported");
@@ -90,8 +92,25 @@ int main(int argc, char *argv[])
     else
     {
         std::cout << "camera started\n";
-        cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-        cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
+        cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        switch (video_mode)
+        {
+            case 0:
+                cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+                cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
+                break;
+            case 1:
+                cap.set(cv::CAP_PROP_FRAME_WIDTH,3840);
+                cap.set(cv::CAP_PROP_FRAME_HEIGHT,2160);
+                break;
+            default:
+                cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+                cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
+
+        }
+        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        std::cout << "Width: " << w << " Height: " << h << "\n";
     }
 
     cv::VideoWriter resultVideo;
@@ -99,8 +118,7 @@ int main(int argc, char *argv[])
     {
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        std::cout << "Width: " << w << " Height: " << h << "\n";
-        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('M', 'P', '4', 'V'), 30, cv::Size(w, h));
+        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
     }
 
     cv::Mat frame;
