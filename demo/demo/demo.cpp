@@ -84,15 +84,22 @@ int main(int argc, char *argv[])
 
     cv::VideoCapture cap(input);
     if (!cap.isOpened())
+    {
         gRun = false;
+    }
     else
+    {
         std::cout << "camera started\n";
+        cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
+        cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
+    }
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
     {
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        std::cout << "Width: " << w << " Height: " << h << "\n";
         resultVideo.open("result.mp4", cv::VideoWriter::fourcc('M', 'P', '4', 'V'), 30, cv::Size(w, h));
     }
 
@@ -100,7 +107,7 @@ int main(int argc, char *argv[])
     if (show)
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
     cv::moveWindow("detection", 100, 100);
-    cv::resizeWindow("detection", 640, 480);
+    cv::resizeWindow("detection", 1920, 1080);
 
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
