@@ -61,13 +61,18 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV")
 find_package(yaml-cpp REQUIRED)
 
 #-------------------------------------------------------------------------------
+# IDS Cmaera Library
+#-------------------------------------------------------------------------------
+add_subdirectory(lib/ids_opencv)
+
+#-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
 file(GLOB tkdnn_SRC "src/*.cpp")
 set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
 add_library(tkDNN SHARED ${tkdnn_SRC})
 target_link_libraries(tkDNN ${tkdnn_LIBS})
 
@@ -152,10 +157,11 @@ target_link_libraries(demo tkDNN)
 
 add_executable(demoIDS demo/demo/demoIDS.cpp)
 target_include_directories (demoIDS
+    PRIVATE ids_opencv_worker
     PRIVATE ${${LIBRARY_NAME_UPPER_VISION_API}_INCLUDE_DIR}
     PRIVATE ${${LIBRARY_NAME_LIBIMG_UPPER}_INCLUDE_DIR}
 )
-target_link_libraries(demoIDS tkDNN)
+target_link_libraries(demoIDS tkDNN ids_opencv_worker)
 
 add_executable(demo3D demo/demo/demo3D.cpp)
 target_link_libraries(demo3D tkDNN)
