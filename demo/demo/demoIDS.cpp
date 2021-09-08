@@ -6,13 +6,12 @@
 #include <https_stream.h> //https_stream
 
 #include <cstdint>
-#include <peak/converters/peak_buffer_converter_ipl.hpp>
-#include <peak/peak.hpp>
-#include <peak_ipl/peak_ipl.hpp>
 
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
+
+#include "idscameramanager.h"
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -89,15 +88,16 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-    cv::VideoCapture cap(input);
-    if (!cap.isOpened())
+    // cv::VideoCapture cap(input);
+    IdsCameraManager w;
+    if (!w.isRunning)
     {
         gRun = false;
     }
     else
     {
         std::cout << "camera started\n";
-        cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        /*cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
         switch (video_mode)
         {
             case 0:
@@ -115,15 +115,16 @@ int main(int argc, char *argv[])
         }
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        std::cout << "Width: " << w << " Height: " << h << "\n";
+        std::cout << "Width: " << w << " Height: " << h << "\n";*/
     }
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
     {
+        /*
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
+        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));*/
     }
 
     cv::Mat frame;
@@ -144,7 +145,7 @@ int main(int argc, char *argv[])
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
-            cap >> frame;
+            frame = w.getFrame();
             if (!frame.data)
                 break;
 
