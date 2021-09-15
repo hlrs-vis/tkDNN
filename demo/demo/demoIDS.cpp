@@ -88,9 +88,8 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-    // cv::VideoCapture cap(input);
-    IdsCameraManager w;
-    if (!w.isRunning)
+    IdsCameraManager IDSCam;
+    if (!IDSCam.isRunning())
     {
         gRun = false;
     }
@@ -121,10 +120,9 @@ int main(int argc, char *argv[])
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
     {
-        /*
-        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));*/
+        int w = IDSCam.getWidth();
+        int h = IDSCam.getHeight();
+        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
     }
 
     cv::Mat frame;
@@ -138,14 +136,15 @@ int main(int argc, char *argv[])
 
     long long int frame_id = 0;
 
-    while (gRun)
+    while (gRun) //(IDSCam.frameCounter() < 20)
     {
+        // std::cout << "Frame " << IDSCam.frameCounter() << "\n";
         batch_dnn_input.clear();
         batch_frame.clear();
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
-            frame = w.getFrame();
+            frame = IDSCam.getFrame();
             if (!frame.data)
                 break;
 
@@ -173,8 +172,10 @@ int main(int argc, char *argv[])
             break;
         }
         if (n_batch == 1 && SAVE_RESULT)
-            resultVideo << frame;
-
+        {
+            resultVideo.write(frame);
+            std::cout << "Frame " << IDSCam.frameCounter() << " written. \n";
+        }
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
