@@ -568,11 +568,16 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
         sprintf(send_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", frame_id);
     }
     tk::dnn::box b;
+
+    int json_index = -1;
+
     for (int bi = 0; bi < detNN.batchDetected.size(); ++bi)
     {
         // draw dets
         for (int i = 0; i < detNN.batchDetected[bi].size(); i++)
         {
+            if (json_index != -1) strcat(send_buf, ", \n");
+            json_index = bi;
             b = detNN.batchDetected[bi][i];
             det_class = detNN.classesNames[b.cl];
 
@@ -584,7 +589,7 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
             Yh = b.h / imageHeight;
 
             char *buf = (char *)calloc(2048, sizeof(char));
-            sprintf(buf, "  {\"class_id\":%d, \"name\":\"%s\", \"relative_coordinates\":{\"center_x\":%f, \"center_y\":%f, \"width\":%f, \"height\":%f}, \"confidence\":%f},",
+            sprintf(buf, "  {\"class_id\":%d, \"name\":\"%s\", \"relative_coordinates\":{\"center_x\":%f, \"center_y\":%f, \"width\":%f, \"height\":%f}, \"confidence\":%f}",
             b.cl, det_class.c_str(), Yx, Yy, Yw, Yh, b.prob);
             int send_buf_len = strlen(send_buf);
             int buf_len = strlen(buf);
