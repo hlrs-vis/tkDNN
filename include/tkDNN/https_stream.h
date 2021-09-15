@@ -584,7 +584,7 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
             Yh = b.h / imageHeight;
 
             char *buf = (char *)calloc(2048, sizeof(char));
-            sprintf(buf, "  {\"class_id\":%d, \"name\":\"%s\", \"relative_coordinates\":{\"center_x\":%f, \"center_y\":%f, \"width\":%f, \"height\":%f}, \"confidence\":%f}",
+            sprintf(buf, "  {\"class_id\":%d, \"name\":\"%s\", \"relative_coordinates\":{\"center_x\":%f, \"center_y\":%f, \"width\":%f, \"height\":%f}, \"confidence\":%f},",
             b.cl, det_class.c_str(), Yx, Yy, Yw, Yh, b.prob);
             int send_buf_len = strlen(send_buf);
             int buf_len = strlen(buf);
