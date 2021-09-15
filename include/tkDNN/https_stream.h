@@ -610,7 +610,7 @@ void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, long l
         char *send_buf = detection_to_json(frames, detNN, frame_id, NULL);
 
         send_json_custom(send_buf, port, timeout);
-        std::cout << " JSON-stream sent on port " << port << ". \n";
+        // std::cout << " JSON-stream sent on port " << port << ". \n";
 
         free(send_buf);
     }
