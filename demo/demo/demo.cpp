@@ -111,6 +111,11 @@ int main(int argc, char *argv[])
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         std::cout << "Width: " << w << " Height: " << h << "\n";
+        cv::String outFileName = "calibrationFrame" + std::to_string(0);
+        outFileName.append(".jpg");
+        cv::Mat calibrationFrame;
+        cap >> calibrationFrame;
+        cv::imwrite(outFileName,calibrationFrame);
     }
 
     cv::VideoWriter resultVideo;
