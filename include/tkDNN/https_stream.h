@@ -568,11 +568,16 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
         sprintf(send_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", frame_id);
     }
     tk::dnn::box b;
+
+    int json_index = -1;
+
     for (int bi = 0; bi < detNN.batchDetected.size(); ++bi)
     {
         // draw dets
         for (int i = 0; i < detNN.batchDetected[bi].size(); i++)
         {
+            if (json_index != -1) strcat(send_buf, ", \n");
+            json_index = bi;
             b = detNN.batchDetected[bi][i];
             det_class = detNN.classesNames[b.cl];
 
