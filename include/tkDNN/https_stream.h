@@ -544,14 +544,14 @@ void send_json_custom(char const* send_buf, int port, int timeout)
 
 // JSON format:
 //{
-// "frame_id":8990,
+// "frame_id":8990, "frame_time":1631555332.334568
 // "objects":[
 //  {"class_id":4, "name":"aeroplane", "relative coordinates":{"center_x":0.398831, "center_y":0.630203, "width":0.057455, "height":0.020396}, "confidence":0.793070},
 //  {"class_id":14, "name":"bird", "relative coordinates":{"center_x":0.398831, "center_y":0.630203, "width":0.057455, "height":0.020396}, "confidence":0.265497}
 // ]
 //},
 
-char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN , long long int frame_id, char *filename)
+char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN , long long int frame_id, char *filename, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times)
 {
     float Yx, Yy, Yw, Yh;
     cv::Size sz = frames[0].size();
@@ -604,10 +604,11 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
     return send_buf;
 }
 
-void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, long long int frame_id, int port, int timeout)
+
+void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, long long int frame_id, int port, int timeout, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times = NULL)
 {
     try {
-        char *send_buf = detection_to_json(frames, detNN, frame_id, NULL);
+        char *send_buf = detection_to_json(frames, detNN, frame_id, NULL, frame_times);
 
         send_json_custom(send_buf, port, timeout);
         // std::cout << " JSON-stream sent on port " << port << ". \n";
