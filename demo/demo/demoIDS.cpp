@@ -138,6 +138,7 @@ int main(int argc, char *argv[])
     std::vector<cv::Mat> batch_dnn_input;
 
     long long int frame_id = 0;
+    std::vector<long long int> frame_ids;
 
     while (gRun) //(IDSCam.frameCounter() < 20)
     {
@@ -147,13 +148,15 @@ int main(int argc, char *argv[])
         // std::cout << "Frame " << IDSCam.frameCounter() << "\n";
         batch_dnn_input.clear();
         batch_frame.clear();
+        frame_ids.clear();
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
             frame = IDSCam.getFrame();
             if (!frame.data)
                 break;
-
+            frame_ids.push_back(frame_id);
+            frame_id++;
             batch_frame.push_back(frame);
 
             // this will be resized to the net format
@@ -189,7 +192,7 @@ int main(int argc, char *argv[])
         
         if (json_port > 0)
         {
-            send_json(batch_frame, *detNN, frame_id, json_port, 40000);
+            send_json(batch_frame, *detNN, frame_ids, json_port, 40000);
             frame_id++;
         }
         std::clock_t c_end = std::clock();

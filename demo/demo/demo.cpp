@@ -141,6 +141,7 @@ int main(int argc, char *argv[])
 
     std::vector<std::chrono::time_point<std::chrono::system_clock>> batch_frame_time;
 
+    std::vector<long long int> frame_ids;
     long long int frame_id = 0;
 
     while (gRun)
@@ -149,6 +150,7 @@ int main(int argc, char *argv[])
         auto t_start = std::chrono::high_resolution_clock::now();
         batch_dnn_input.clear();
         batch_frame.clear();
+        frame_ids.clear();
         batch_frame_time.clear();
 
         for (int bi = 0; bi < n_batch; ++bi)
@@ -158,6 +160,8 @@ int main(int argc, char *argv[])
                 break;
 
             batch_frame_time.push_back(std::chrono::system_clock::now());
+            frame_ids.push_back(frame_id);
+            frame_id++;
             batch_frame.push_back(frame);
 
             // this will be resized to the net format
@@ -176,6 +180,7 @@ int main(int argc, char *argv[])
             {
                 cv::imshow("detection", batch_frame[bi]);
             }
+            //cv::imshow("detection", batch_frame[0]);
         }
         if (cv::waitKey(1) == 27)
         {
@@ -191,8 +196,7 @@ int main(int argc, char *argv[])
         
         if (json_port > 0)
         {
-            send_json(batch_frame, *detNN, frame_id, json_port, 40000);
-            frame_id++;
+            send_json(batch_frame, *detNN, frame_ids, json_port, 40000, &batch_frame_time);
         }
         /*
         std::clock_t c_end = std::clock();

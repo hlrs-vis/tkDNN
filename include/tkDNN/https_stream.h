@@ -551,7 +551,7 @@ void send_json_custom(char const* send_buf, int port, int timeout)
 // ]
 //},
 
-char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN , long long int frame_id, char *filename, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times)
+char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN , std::vector<long long int> frame_ids, char *filename, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times)
 {
     float Yx, Yy, Yw, Yh;
     cv::Size sz = frames[0].size();
@@ -560,26 +560,46 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
     std::string det_class;
     char *send_buf = (char *)calloc(2048, sizeof(char));
     if (!send_buf) return 0;
-
-    if (filename) {
-        sprintf(send_buf, "{\n \"frame_id\":%lld, \n \"filename\":\"%s\", \n \"objects\": [ \n", frame_id, filename);
-    }
-    else {
-        sprintf(send_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", frame_id);
-    }
+    
     tk::dnn::box b;
 
-    int json_index = -1;
-
+    sprintf(send_buf, "");
+    int batch_index =-1;
     for (int bi = 0; bi < detNN.batchDetected.size(); ++bi)
     {
+        if (batch_index != -1) strcat(send_buf, ", \n");
+        batch_index=bi;
+        char *header_buf = (char *)calloc(2048, sizeof(char));
+        if (filename) {
+            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"filename\":\"%s\", \n \"objects\": [ \n", frame_ids[bi], filename);
+        }
+        else {
+            if (frame_times){
+                auto time1 = *frame_times;
+                auto time2 = time1[bi];
+                auto time3 = std::chrono::duration<double, std::milli>(time2.time_since_epoch()).count();
+                sprintf(header_buf, "{\n \"frame_id\":%lld,\"frame_time\":%f, \n \"objects\": [ \n", frame_ids[bi],time3);
+            }
+            else
+            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", frame_ids[bi]);
+        }
+        int send_buf_len = strlen(send_buf);
+        int header_buf_len = strlen(header_buf);
+        int total_len = send_buf_len + header_buf_len + 100;
+        send_buf = (char *)realloc(send_buf, total_len * sizeof(char));
+        strcat(send_buf, header_buf);
+        free(header_buf);
         // draw dets
+        int json_index = -1;
         for (int i = 0; i < detNN.batchDetected[bi].size(); i++)
         {
             if (json_index != -1) strcat(send_buf, ", \n");
-            json_index = bi;
+            json_index = i;
             b = detNN.batchDetected[bi][i];
             det_class = detNN.classesNames[b.cl];
+
+
+            //auto time3 = std::chrono::duration_cast<double, std::chrono::milliseconds>(time2.time_since_epoch()).count();
 
             //yolo stuff
 
@@ -591,24 +611,24 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
             char *buf = (char *)calloc(2048, sizeof(char));
             sprintf(buf, "  {\"class_id\":%d, \"name\":\"%s\", \"relative_coordinates\":{\"center_x\":%f, \"center_y\":%f, \"width\":%f, \"height\":%f}, \"confidence\":%f}",
             b.cl, det_class.c_str(), Yx, Yy, Yw, Yh, b.prob);
-            int send_buf_len = strlen(send_buf);
+            send_buf_len = strlen(send_buf);
             int buf_len = strlen(buf);
-            int total_len = send_buf_len + buf_len + 100;
+            total_len = send_buf_len + buf_len + 100;
             send_buf = (char *)realloc(send_buf, total_len * sizeof(char));
             strcat(send_buf, buf);
             free(buf);
         }
+        strcat(send_buf, "\n ] \n} \n");
     }
 
-    strcat(send_buf, "\n ] \n}");
     return send_buf;
 }
 
 
-void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, long long int frame_id, int port, int timeout, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times = NULL)
+void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, std::vector<long long int> frame_ids, int port, int timeout, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times = NULL)
 {
     try {
-        char *send_buf = detection_to_json(frames, detNN, frame_id, NULL, frame_times);
+        char *send_buf = detection_to_json(frames, detNN, frame_ids, NULL, frame_times);
 
         send_json_custom(send_buf, port, timeout);
         // std::cout << " JSON-stream sent on port " << port << ". \n";
