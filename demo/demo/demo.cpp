@@ -5,6 +5,10 @@
 #include <mutex>
 #include <https_stream.h> //https_stream
 
+#include <chrono>
+#include <ctime>
+#include <time.h>
+
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
@@ -135,12 +139,17 @@ int main(int argc, char *argv[])
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
 
+    std::vector<std::chrono::time_point<std::chrono::system_clock>> batch_frame_time;
+
     long long int frame_id = 0;
 
     while (gRun)
     {
+        std::clock_t c_start = std::clock();
+        auto t_start = std::chrono::high_resolution_clock::now();
         batch_dnn_input.clear();
         batch_frame.clear();
+        batch_frame_time.clear();
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
@@ -148,6 +157,7 @@ int main(int argc, char *argv[])
             if (!frame.data)
                 break;
 
+            batch_frame_time.push_back(std::chrono::system_clock::now());
             batch_frame.push_back(frame);
 
             // this will be resized to the net format
@@ -184,6 +194,18 @@ int main(int argc, char *argv[])
             send_json(batch_frame, *detNN, frame_id, json_port, 40000);
             frame_id++;
         }
+        /*
+        std::clock_t c_end = std::clock();
+        auto t_end = std::chrono::high_resolution_clock::now();
+        auto time_lowres = std::chrono::system_clock::now();
+
+
+        std::cout << std::fixed << std::setprecision(4) << "CPU time used: "
+        << 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
+        << "Wall clock time passed: "
+        << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+        << " ms\n" << "Highres Time is:" << t_start.time_since_epoch().count() << "\n"
+        << " ms\n" << "Lowres Time is:" << std::chrono::duration<double, std::milli>(time_lowres.time_since_epoch()).count() << "\n";*/
     }
 
     std::cout << "detection end\n";
