@@ -6,6 +6,8 @@
 #include <https_stream.h> //https_stream
 
 #include <cstdint>
+#include <chrono>
+#include <ctime>
 
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
@@ -89,6 +91,7 @@ int main(int argc, char *argv[])
     gRun = true;
 
     IdsCameraManager IDSCam;
+    IDSCam.setFrameRate(20);
     if (!IDSCam.isRunning())
     {
         gRun = false;
@@ -138,6 +141,9 @@ int main(int argc, char *argv[])
 
     while (gRun) //(IDSCam.frameCounter() < 20)
     {
+        std::clock_t c_start = std::clock();
+        auto t_start = std::chrono::high_resolution_clock::now();
+        
         // std::cout << "Frame " << IDSCam.frameCounter() << "\n";
         batch_dnn_input.clear();
         batch_frame.clear();
@@ -186,6 +192,14 @@ int main(int argc, char *argv[])
             send_json(batch_frame, *detNN, frame_id, json_port, 40000);
             frame_id++;
         }
+        std::clock_t c_end = std::clock();
+        auto t_end = std::chrono::high_resolution_clock::now();
+ 
+        std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
+                << 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
+                << "Wall clock time passed: "
+                << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+                << " ms\n";
     }
 
     std::cout << "detection end\n";
