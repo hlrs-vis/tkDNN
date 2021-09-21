@@ -143,6 +143,7 @@ int main(int argc, char *argv[])
 
     std::vector<long long int> frame_ids;
     long long int frame_id = 0;
+    std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
 
     while (gRun)
     {
@@ -212,6 +213,8 @@ int main(int argc, char *argv[])
         << " ms\n" << "Lowres Time is:" << std::chrono::duration<double, std::milli>(time_lowres.time_since_epoch()).count() << "\n";*/
     }
 
+    std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
+
     std::cout << "detection end\n";
     double mean = 0;
 
@@ -223,6 +226,8 @@ int main(int argc, char *argv[])
     mean /= detNN->stats.size();
     std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
               << COL_END;
+
+    std::cout << COL_GREENB << "Frames overall: " << frame_id / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
 
     return 0;
 }
