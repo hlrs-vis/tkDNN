@@ -576,9 +576,10 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
         }
         else {
             if (frame_times){
-                auto time1 = *frame_times;
-                auto time2 = time1[bi];
-                auto time3 = std::chrono::duration<double, std::milli>(time2.time_since_epoch()).count();
+                //auto time1 = *frame_times;
+                //auto time2 = time1[bi];
+                auto time2 = (*frame_times)[bi];
+                auto time3 = std::chrono::duration<double>(time2.time_since_epoch()).count();
                 sprintf(header_buf, "{\n \"frame_id\":%lld,\"frame_time\":%f, \n \"objects\": [ \n", frame_ids[bi],time3);
             }
             else
