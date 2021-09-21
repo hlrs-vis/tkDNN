@@ -63,7 +63,7 @@ find_package(yaml-cpp REQUIRED)
 #-------------------------------------------------------------------------------
 # IDS Cmaera Library
 #-------------------------------------------------------------------------------
-if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv")
+if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv/CMakelists.txt")
     add_subdirectory(lib/ids_opencv)
     set(with_ids true)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
