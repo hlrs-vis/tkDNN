@@ -63,8 +63,11 @@ find_package(yaml-cpp REQUIRED)
 #-------------------------------------------------------------------------------
 # IDS Cmaera Library
 #-------------------------------------------------------------------------------
-add_subdirectory(lib/ids_opencv)
-
+if (IS_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv")
+    add_subdirectory(lib/ids_opencv)
+    set(with_ids true)
+    include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
+endif()
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
@@ -72,7 +75,7 @@ file(GLOB tkdnn_SRC "src/*.cpp")
 set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES} ${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
 add_library(tkDNN SHARED ${tkdnn_SRC})
 target_link_libraries(tkDNN ${tkdnn_LIBS})
 
@@ -155,6 +158,7 @@ target_link_libraries(map_demo tkDNN)
 add_executable(demo demo/demo/demo.cpp)
 target_link_libraries(demo tkDNN)
 
+if (with_ids)
 add_executable(demoIDS demo/demo/demoIDS.cpp)
 target_include_directories (demoIDS
     PRIVATE ids_opencv_worker
@@ -162,6 +166,7 @@ target_include_directories (demoIDS
     PRIVATE ${${LIBRARY_NAME_LIBIMG_UPPER}_INCLUDE_DIR}
 )
 target_link_libraries(demoIDS tkDNN ids_opencv_worker)
+endif()
 
 add_executable(demo3D demo/demo/demo3D.cpp)
 target_link_libraries(demo3D tkDNN)
