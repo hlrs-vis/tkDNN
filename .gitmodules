@@ -1,0 +1,3 @@
+[submodule "lib/ids_opencv"]
+	path = lib/ids_opencv
+	url = git@github.com:tobst/ids_opencv.git

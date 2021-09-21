@@ -5,13 +5,15 @@
 #include <mutex>
 #include <https_stream.h> //https_stream
 
+#include <cstdint>
 #include <chrono>
 #include <ctime>
-#include <time.h>
 
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
+
+#include "idscameramanager.h"
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -88,15 +90,16 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-    cv::VideoCapture cap(input);
-    if (!cap.isOpened())
+    IdsCameraManager IDSCam;
+    IDSCam.setFrameRate(20);
+    if (!IDSCam.isRunning())
     {
         gRun = false;
     }
     else
     {
         std::cout << "camera started\n";
-        cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        /*cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
         switch (video_mode)
         {
             case 0:
@@ -114,19 +117,14 @@ int main(int argc, char *argv[])
         }
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        std::cout << "Width: " << w << " Height: " << h << "\n";
-        cv::String outFileName = "calibrationFrame" + std::to_string(0);
-        outFileName.append(".jpg");
-        cv::Mat calibrationFrame;
-        cap >> calibrationFrame;
-        cv::imwrite(outFileName,calibrationFrame);
+        std::cout << "Width: " << w << " Height: " << h << "\n";*/
     }
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
     {
-        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
+        int w = IDSCam.getWidth();
+        int h = IDSCam.getHeight();
         resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
     }
 
@@ -139,27 +137,24 @@ int main(int argc, char *argv[])
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
 
-    std::vector<std::chrono::time_point<std::chrono::system_clock>> batch_frame_time;
-
-    std::vector<long long int> frame_ids;
     long long int frame_id = 0;
+    std::vector<long long int> frame_ids;
 
-    while (gRun)
+    while (gRun) //(IDSCam.frameCounter() < 20)
     {
         std::clock_t c_start = std::clock();
         auto t_start = std::chrono::high_resolution_clock::now();
+        
+        // std::cout << "Frame " << IDSCam.frameCounter() << "\n";
         batch_dnn_input.clear();
         batch_frame.clear();
         frame_ids.clear();
-        batch_frame_time.clear();
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
-            cap >> frame;
+            frame = IDSCam.getFrame();
             if (!frame.data)
                 break;
-
-            batch_frame_time.push_back(std::chrono::system_clock::now());
             frame_ids.push_back(frame_id);
             frame_id++;
             batch_frame.push_back(frame);
@@ -180,15 +175,16 @@ int main(int argc, char *argv[])
             {
                 cv::imshow("detection", batch_frame[bi]);
             }
-            //cv::imshow("detection", batch_frame[0]);
         }
         if (cv::waitKey(1) == 27)
         {
             break;
         }
         if (n_batch == 1 && SAVE_RESULT)
-            resultVideo << frame;
-
+        {
+            resultVideo.write(frame);
+            std::cout << "Frame " << IDSCam.frameCounter() << " written. \n";
+        }
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
@@ -196,20 +192,17 @@ int main(int argc, char *argv[])
         
         if (json_port > 0)
         {
-            send_json(batch_frame, *detNN, frame_ids, json_port, 40000, &batch_frame_time);
+            send_json(batch_frame, *detNN, frame_ids, json_port, 40000);
+            frame_id++;
         }
-        /*
         std::clock_t c_end = std::clock();
         auto t_end = std::chrono::high_resolution_clock::now();
-        auto time_lowres = std::chrono::system_clock::now();
-
-
-        std::cout << std::fixed << std::setprecision(4) << "CPU time used: "
-        << 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
-        << "Wall clock time passed: "
-        << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-        << " ms\n" << "Highres Time is:" << t_start.time_since_epoch().count() << "\n"
-        << " ms\n" << "Lowres Time is:" << std::chrono::duration<double, std::milli>(time_lowres.time_since_epoch()).count() << "\n";*/
+ 
+        std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
+                << 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
+                << "Wall clock time passed: "
+                << std::chrono::duration<double, std::milli>(t_end-t_start).count()
+                << " ms\n";
     }
 
     std::cout << "detection end\n";
