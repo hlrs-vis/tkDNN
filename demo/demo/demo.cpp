@@ -13,6 +13,8 @@
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
 
+#include "SharedQueue.h"
+
 bool gRun;
 bool SAVE_RESULT = false;
 
