@@ -64,11 +64,11 @@ find_package(yaml-cpp REQUIRED)
 #-------------------------------------------------------------------------------
 # IDS Cmaera Library
 #-------------------------------------------------------------------------------
-#if (EXISTS ${CMAKE_SOURCE_DIR}/lib/ids_opencv/CMakelists.txt)
+if (EXISTS ${CMAKE_SOURCE_DIR}/lib/ids_opencv/CMakeLists.txt)
     add_subdirectory(lib/ids_opencv)
     set(with_ids true)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
-#endif()
+endif()
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
