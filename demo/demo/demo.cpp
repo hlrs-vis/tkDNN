@@ -14,6 +14,7 @@
 #include "Yolo3Detection.h"
 
 #include "SharedQueue.h"
+#include "TypewithMetadata.h"
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -112,7 +113,6 @@ int main(int argc, char *argv[])
             default:
                 cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
                 cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
-
         }
         int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
         int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
@@ -141,6 +141,9 @@ int main(int argc, char *argv[])
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
 
+    std::vector<TypewithMetadata<cv::Mat>> batch_images;
+    TypewithMetadata<cv::Mat> image;
+
     std::vector<std::chrono::time_point<std::chrono::system_clock>> batch_frame_time;
 
     std::vector<long long int> frame_ids;
@@ -158,19 +161,21 @@ int main(int argc, char *argv[])
 
         for (int bi = 0; bi < n_batch; ++bi)
         {
-            cap >> frame;
-            if (!frame.data)
+            cap >> image.data;
+            if (!image.data.data)
                 break;
+            image.time = std::chrono::high_resolution_clock::now();
+            batch_images.push_back(image);
 
             batch_frame_time.push_back(std::chrono::system_clock::now());
             frame_ids.push_back(frame_id);
             frame_id++;
-            batch_frame.push_back(frame);
+            batch_frame.push_back(image.data);
 
             // this will be resized to the net format
-            batch_dnn_input.push_back(frame.clone());
+            batch_dnn_input.push_back(image.data.clone());
         }
-        if (!frame.data)
+        if (!image.data.data)
             break;
 
         //inference
@@ -199,7 +204,7 @@ int main(int argc, char *argv[])
         
         if (json_port > 0)
         {
-            send_json(batch_frame, *detNN, frame_ids, json_port, 40000, &batch_frame_time);
+            //send_json(batch_frame, *detNN, frame_ids, json_port, 40000, &batch_frame_time);
         }
         /*
         std::clock_t c_end = std::clock();

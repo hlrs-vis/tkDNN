@@ -3,7 +3,7 @@ cmake_minimum_required(VERSION 3.15)
 project (tkDNN)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 if(UNIX)
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC -Wno-deprecated-declarations -Wno-unused-variable -g")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++14 -fPIC -Wno-deprecated-declarations -Wno-unused-variable")
 endif()
 if(WIN32)
 set(CMAKE_CXX_STANDARD 14)
@@ -15,6 +15,7 @@ include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/tkDNN)
 # project specific flags
 if(DEBUG)
     add_definitions(-DDEBUG)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 endif()
 
 if(TKDNN_PATH)
@@ -63,11 +64,11 @@ find_package(yaml-cpp REQUIRED)
 #-------------------------------------------------------------------------------
 # IDS Cmaera Library
 #-------------------------------------------------------------------------------
-if (EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv/CMakelists.txt")
+#if (EXISTS ${CMAKE_SOURCE_DIR}/lib/ids_opencv/CMakelists.txt)
     add_subdirectory(lib/ids_opencv)
     set(with_ids true)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
-endif()
+#endif()
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
@@ -166,6 +167,16 @@ target_include_directories (demoIDS
     PRIVATE ${${LIBRARY_NAME_LIBIMG_UPPER}_INCLUDE_DIR}
 )
 target_link_libraries(demoIDS tkDNN ids_opencv_worker)
+
+
+
+add_executable(demoGeneral demo/demo/demoGeneral.cpp)
+target_include_directories (demoGeneral
+    PRIVATE ids_opencv_worker
+    PRIVATE ${${LIBRARY_NAME_UPPER_VISION_API}_INCLUDE_DIR}
+    PRIVATE ${${LIBRARY_NAME_LIBIMG_UPPER}_INCLUDE_DIR}
+)
+target_link_libraries(demoGeneral tkDNN ids_opencv_worker)
 endif()
 
 add_executable(demo3D demo/demo/demo3D.cpp)

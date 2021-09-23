@@ -5,15 +5,17 @@
 #include <mutex>
 #include <https_stream.h> //https_stream
 
-#include <cstdint>
 #include <chrono>
 #include <ctime>
+#include <time.h>
 
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
 
-#include "idscameramanager.h"
+#include "SharedQueue.h"
+#include "TypewithMetadata.h"
+#include "OpenCVVideoCapture.h"
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -90,84 +92,71 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-    IdsCameraManager IDSCam;
-    IDSCam.setFrameRate(20);
-    if (!IDSCam.isRunning())
-    {
-        gRun = false;
-    }
-    else
-    {
-        std::cout << "camera started\n";
-        /*cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
-        switch (video_mode)
-        {
-            case 0:
-                cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-                cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
-                break;
-            case 1:
-                cap.set(cv::CAP_PROP_FRAME_WIDTH,3840);
-                cap.set(cv::CAP_PROP_FRAME_HEIGHT,2160);
-                break;
-            default:
-                cap.set(cv::CAP_PROP_FRAME_WIDTH,1920);
-                cap.set(cv::CAP_PROP_FRAME_HEIGHT,1080);
+bool draw = (show || SAVE_RESULT);
 
-        }
-        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        std::cout << "Width: " << w << " Height: " << h << "\n";*/
-    }
+VideoAcquisition *video;
+OpenCVVideoCapture opencv_capture;
+video = new OpenCVVideoCapture;
+
+video->init(input, video_mode);
+
+video->start();
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
-    {
-        int w = IDSCam.getWidth();
-        int h = IDSCam.getHeight();
+    {   /*
+        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
+        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
         resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
+        */
     }
 
     cv::Mat frame;
     if (show)
+    {
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
-    cv::moveWindow("detection", 100, 100);
-    cv::resizeWindow("detection", 1920, 1080);
+        cv::moveWindow("detection", 100, 100);
+        cv::resizeWindow("detection", 1920, 1080);
+    }
 
     std::vector<cv::Mat> batch_frame;
     std::vector<cv::Mat> batch_dnn_input;
 
-    long long int frame_id = 0;
-    std::vector<long long int> frame_ids;
+    std::vector<TypewithMetadata<cv::Mat>> *batch_images = new std::vector<TypewithMetadata<cv::Mat>>;
+    TypewithMetadata<cv::Mat> image;
 
-    while (gRun) //(IDSCam.frameCounter() < 20)
+    std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
+    int frames_processed = 0;
+    while (gRun)
     {
-        std::clock_t c_start = std::clock();
-        auto t_start = std::chrono::high_resolution_clock::now();
-        
-        // std::cout << "Frame " << IDSCam.frameCounter() << "\n";
+        //ensure queue holds enough pictures for batch size
+
+
         batch_dnn_input.clear();
         batch_frame.clear();
-        frame_ids.clear();
+        batch_images->clear();
 
+        video->getImages(batch_images, n_batch);
+        
         for (int bi = 0; bi < n_batch; ++bi)
         {
-            frame = IDSCam.getFrame();
-            if (!frame.data)
-                break;
-            frame_ids.push_back(frame_id);
-            frame_id++;
-            batch_frame.push_back(frame);
+            // this will be used for the visualisation
+            if (draw)
+                batch_frame.push_back((*batch_images)[bi].data);
 
             // this will be resized to the net format
-            batch_dnn_input.push_back(frame.clone());
+            if (!draw)
+                //batch_dnn_input.push_back((*batch_images)[bi].data);
+                batch_dnn_input.push_back(std::move((*batch_images)[bi].data));
+            else
+            batch_dnn_input.push_back((*batch_images)[bi].data);
         }
-        if (!frame.data)
-            break;
 
         //inference
         detNN->update(batch_dnn_input, n_batch);
-        detNN->draw(batch_frame,extyolo);
+        if (draw)
+            detNN->draw(batch_frame,extyolo);
+        frames_processed += n_batch;
 
         if (show)
         {
@@ -175,16 +164,15 @@ int main(int argc, char *argv[])
             {
                 cv::imshow("detection", batch_frame[bi]);
             }
+            //cv::imshow("detection", batch_frame[0]);
         }
         if (cv::waitKey(1) == 27)
         {
             break;
         }
         if (n_batch == 1 && SAVE_RESULT)
-        {
-            resultVideo.write(frame);
-            std::cout << "Frame " << IDSCam.frameCounter() << " written. \n";
-        }
+            resultVideo << batch_frame[0];
+
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
@@ -192,18 +180,14 @@ int main(int argc, char *argv[])
         
         if (json_port > 0)
         {
-            // send_json(batch_frame, *detNN, frame_ids, json_port, 40000);
-            frame_id++;
+            send_json(batch_images, *detNN, json_port, 40000);
         }
-        std::clock_t c_end = std::clock();
-        auto t_end = std::chrono::high_resolution_clock::now();
- 
-        std::cout << std::fixed << std::setprecision(2) << "CPU time used: "
-                << 1000.0 * (c_end - c_start) / CLOCKS_PER_SEC << " ms\n"
-                << "Wall clock time passed: "
-                << std::chrono::duration<double, std::milli>(t_end-t_start).count()
-                << " ms\n";
     }
+
+    video->stop();
+    long long int frame_id = (*batch_images)[n_batch-1].frame_id;
+
+    std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
 
     std::cout << "detection end\n";
     double mean = 0;
@@ -216,6 +200,8 @@ int main(int argc, char *argv[])
     mean /= detNN->stats.size();
     std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
               << COL_END;
+
+    std::cout << COL_GREENB << "Frames overall: " << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
 
     return 0;
 }

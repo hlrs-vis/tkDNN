@@ -103,6 +103,7 @@ static int close_socket(SOCKET s) {
 #include <opencv2/videoio/videoio.hpp>
 #endif
 
+#include "TypewithMetadata.h"
 
 using namespace cv;
 using namespace tk; 
@@ -551,10 +552,10 @@ void send_json_custom(char const* send_buf, int port, int timeout)
 // ]
 //},
 
-char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN , std::vector<long long int> frame_ids, char *filename, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times)
+char *detection_to_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, char *filename)
 {
     float Yx, Yy, Yw, Yh;
-    cv::Size sz = frames[0].size();
+    cv::Size sz = (*batch_images)[0].data.size();
     int imageWidth = sz.width;
     int imageHeight = sz.height;
     std::string det_class;
@@ -572,18 +573,18 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
         batch_index=bi;
         char *header_buf = (char *)calloc(2048, sizeof(char));
         if (filename) {
-            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"filename\":\"%s\", \n \"objects\": [ \n", frame_ids[bi], filename);
+            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"filename\":\"%s\", \n \"objects\": [ \n", (*batch_images)[bi].frame_id, filename);
         }
         else {
-            if (frame_times){
+            if (true){
                 //auto time1 = *frame_times;
                 //auto time2 = time1[bi];
-                auto time2 = (*frame_times)[bi];
+                auto time2 = (*batch_images)[bi].time;
                 auto time3 = std::chrono::duration<double>(time2.time_since_epoch()).count();
-                sprintf(header_buf, "{\n \"frame_id\":%lld,\"frame_time\":%f, \n \"objects\": [ \n", frame_ids[bi],time3);
+                sprintf(header_buf, "{\n \"frame_id\":%lld,\"frame_time\":%f, \n \"objects\": [ \n", (*batch_images)[bi].frame_id,time3);
             }
             else
-            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", frame_ids[bi]);
+            sprintf(header_buf, "{\n \"frame_id\":%lld, \n \"objects\": [ \n", (*batch_images)[bi].frame_id);
         }
         int send_buf_len = strlen(send_buf);
         int header_buf_len = strlen(header_buf);
@@ -627,10 +628,10 @@ char *detection_to_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detN
 }
 
 
-void send_json(std::vector<cv::Mat> &frames, tk::dnn::DetectionNN &detNN, std::vector<long long int> frame_ids, int port, int timeout, std::vector<std::chrono::time_point<std::chrono::system_clock>> *frame_times = NULL)
+void send_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, int port, int timeout)
 {
     try {
-        char *send_buf = detection_to_json(frames, detNN, frame_ids, NULL, frame_times);
+        char *send_buf = detection_to_json(batch_images, detNN, NULL);
 
         send_json_custom(send_buf, port, timeout);
         // std::cout << " JSON-stream sent on port " << port << ". \n";
