@@ -16,6 +16,7 @@
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
 #include "OpenCVVideoCapture.h"
+#include "IDSVideoCapture.h"
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -56,6 +57,8 @@ int main(int argc, char *argv[])
     int save = find_int_arg(argc, argv, "-save", 0);
     SAVE_RESULT = save;
 
+    int ids = find_int_arg(argc, argv, "-ids", 0);
+
     int mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", 0);
   
     int extyolo = find_int_arg(argc, argv, "-extyolo", 0);
@@ -95,8 +98,14 @@ int main(int argc, char *argv[])
 bool draw = (show || SAVE_RESULT);
 
 VideoAcquisition *video;
-OpenCVVideoCapture opencv_capture;
-video = new OpenCVVideoCapture;
+
+if (!ids){
+    video = new OpenCVVideoCapture;
+}
+else
+{
+    video = new IDSVideoCapture;
+}
 
 video->init(input, video_mode);
 

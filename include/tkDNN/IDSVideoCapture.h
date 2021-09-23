@@ -7,7 +7,7 @@
 #include "opencv2/opencv.hpp"
 
 #include "VideoAcquisition.h"
-
+#include "idscameramanager.h"
 
 // class VideoAcquisition;
 
@@ -27,7 +27,7 @@ public:
     int getHeight();
 
 private:
-cv::VideoCapture cap;
+IdsCameraManager IDSCam;
 void acquisition_thread();
 //bool m_isOpened = false;
 

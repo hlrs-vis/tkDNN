@@ -62,13 +62,37 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV")
 find_package(yaml-cpp REQUIRED)
 
 #-------------------------------------------------------------------------------
-# IDS Cmaera Library
+# IDS Camera Library
 #-------------------------------------------------------------------------------
-if (EXISTS ${CMAKE_SOURCE_DIR}/lib/ids_opencv/CMakeLists.txt)
+set (CMAKE_SCRIPTS_PATH "${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv/_cmake_scripts" CACHE STRING "The path of the cmake scripts directory.")
+include (${CMAKE_SCRIPTS_PATH}/cmake_detect_architecture.cmake)
+detect_target_architecture (ARCH)
+set (LIBRARY_NAME_VISION_API "ids_peak")
+string (TOUPPER ${LIBRARY_NAME_VISION_API} LIBRARY_NAME_UPPER_VISION_API)
+if (NOT TARGET ids_peak)
+    file (TO_CMAKE_PATH "$ENV{IDS_PEAK_SDK_PATH}/api" ${LIBRARY_NAME_UPPER_VISION_API}_PACKAGE_DIR)
+
+    set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${${LIBRARY_NAME_UPPER_VISION_API}_PACKAGE_DIR}/cmake_finder")
+    message (STATUS "[${PROJECT_NAME}] Will find IDS peak API library.. CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+    find_package (ids_peak REQUIRED)
+endif ()
+
+set (LIBRARY_NAME_LIBIMG "ids_peak_ipl")
+string (TOUPPER ${LIBRARY_NAME_LIBIMG} LIBRARY_NAME_LIBIMG_UPPER)
+if (NOT TARGET ids_peak_ipl)
+    file (TO_CMAKE_PATH "$ENV{IDS_PEAK_SDK_PATH}/ipl" ${LIBRARY_NAME_LIBIMG_UPPER}_PACKAGE_DIR)
+
+    set (CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${${LIBRARY_NAME_LIBIMG_UPPER}_PACKAGE_DIR}/cmake_finder")
+    message (STATUS "[${PROJECT_NAME}] Will find IDS peak IPL library.. CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+    find_package (ids_peak_ipl REQUIRED)
+endif ()
+
+#if (EXISTS ${CMAKE_SOURCE_DIR}/lib/ids_opencv/CMakeLists.txt)
     add_subdirectory(lib/ids_opencv)
     set(with_ids true)
     include_directories(${CMAKE_CURRENT_SOURCE_DIR}/lib/ids_opencv)
-endif()
+    include_directories (ids_opencv_worker ${${LIBRARY_NAME_UPPER_VISION_API}_INCLUDE_DIR} ${${LIBRARY_NAME_LIBIMG_UPPER}_INCLUDE_DIR})
+#endif()
 #-------------------------------------------------------------------------------
 # Build Libraries
 #-------------------------------------------------------------------------------
@@ -78,7 +102,7 @@ set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRAR
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
 add_library(tkDNN SHARED ${tkdnn_SRC})
-target_link_libraries(tkDNN ${tkdnn_LIBS})
+target_link_libraries(tkDNN ${tkdnn_LIBS} ids_opencv_worker)
 
 #static 
 #add_library(tkDNN_static STATIC ${tkdnn_SRC})
