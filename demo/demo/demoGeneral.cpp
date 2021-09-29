@@ -18,8 +18,16 @@
 #include "OpenCVVideoCapture.h"
 #include "IDSVideoCapture.h"
 
+
+#include <boost/property_tree/ptree.hpp>
+#include <boost/property_tree/ini_parser.hpp>
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/xml_parser.hpp>
+
 bool gRun;
 bool SAVE_RESULT = false;
+
+using namespace boost::property_tree;
 
 void sig_handler(int signo)
 {
@@ -32,38 +40,153 @@ int main(int argc, char *argv[])
 
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
+
+    ptree configtree;
+    char *iniconfig = find_char_arg(argc, argv, "-ini", "");
+    std::string iniConfig(iniconfig); 
+
+    char *xmlconfig = find_char_arg(argc, argv, "-xml", "");
+    std::string xmlConfig(xmlconfig);
+
+    char *jsonconfig = find_char_arg(argc, argv, "-json", "");
+    std::string jsonConfig(jsonconfig);
+    
+    if (!iniConfig.empty() ? (!xmlConfig.empty() || !jsonConfig.empty()) : (!xmlConfig.empty() && !jsonConfig.empty()))
+    {
+        std::cout << COL_RED << "ERROR: More than one config file given.\n" << COL_END;
+        return 1;
+    }
+	
+	// ptree configtree;
+    if (!iniConfig.empty())
+    {
+        ini_parser::read_ini(iniConfig, configtree);
+    }
+    else if (!xmlConfig.empty())
+    {
+        xml_parser::read_xml(xmlConfig, configtree);
+    }
+    else if (!jsonConfig.empty())
+    {
+        json_parser::read_json(jsonConfig, configtree);
+    }
+
+    int json_port = 0;
+    std::string inputnet = std::string("yolo4_int8.rt");
+    std::string inputvideo = std::string("../demo/yolo_test.mp4");
+    char input_ntype = 'y';
+    std::cout << "input_ntype is " << input_ntype << "\n";
+    int n_classes = 80;
+    int n_batch = 1;
+    int show = 1;
+    int save = 0;
+    int ids = 0;
+    int mjpeg_port = 0;
+    int extyolo = 0;
+    int video_mode = 0;
+    int frame_rate = 30;
+
+    if( configtree.count("tkdnn") == 0 )
+    {
+    // child node is missing
+    }
+    else
+    {
+        for(auto child : configtree.get_child("tkdnn"))
+        {
+            std::cout << COL_RED << "inside configtree.\n" << COL_END;
+
+            if (child.first == "json_port")
+                json_port = configtree.get<int>("tkdnn.json_port");
+            if (child.first == "inputnet")
+                inputnet = configtree.get<std::string>("tkdnn.inputnet");
+            if (child.first == "inputvideo")
+                inputvideo = configtree.get<std::string>("tkdnn.inputvideo");
+            if (child.first == "input_ntype")
+                input_ntype = configtree.get<char>("tkdnn.ntype");
+            if (child.first == "n_classes")
+                n_classes = configtree.get<int>("tkdnn.n_classes");
+            if (child.first == "n_batch")
+                n_batch = configtree.get<int>("tkdnn.n_batch");
+            if (child.first == "show")
+                show = configtree.get<int>("tkdnn.show");
+            if (child.first == "save")
+                save = configtree.get<int>("tkdnn.save");
+            if (child.first == "ids")
+                ids = configtree.get<int>("tkdnn.ids");
+            if (child.first == "mjpeg_port")
+                mjpeg_port = configtree.get<int>("tkdnn.mjpeg_port");
+            if (child.first == "extyolo")
+                extyolo = configtree.get<int>("tkdnn.extyolo");
+            if (child.first == "video_mode")
+                video_mode = configtree.get<int>("tkdnn.video_mode");
+            if (child.first == "frame_rate")
+                frame_rate = configtree.get<int>("tkdnn.frame_rate");
+            
+        // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
+        }
+    }
     
     // JSON-Port
-    int json_port = find_int_arg(argc, argv, "-json_port", -1);
-  
+    json_port = find_int_arg(argc, argv, "-json_port", json_port);
+    configtree.put("tkdnn.json_port", json_port);
+
+
     // Net
-    char *inputnet = find_char_arg(argc, argv, "-net", "yolo3_berkeley.rt");
-    std::string net(inputnet);
+    char* inputnetchar = find_char_arg(argc, argv, "-net", "");
+    std::string net(inputnetchar);
+    if (!net.empty()) 
+        inputnet = net;
+    configtree.put("tkdnn.inputnet", inputnet);   
 
     // Input 
-    char *inputvideo = find_char_arg(argc, argv, "-input", "../demo/yolo_test.mp4");
-    std::string input(inputvideo); 
+    char* inputvideochar = find_char_arg(argc, argv, "-input", "");
+    std::string input(inputvideochar);
+    if (!input.empty())
+        inputvideo = input;
+    configtree.put("tkdnn.inputvideo", inputvideo);   
 
     //Net-Type  
-    char *input_ntype = find_char_arg(argc, argv, "-ntype", "y");
-    char ntype = input_ntype[0];
+    char* input_ntypechar = find_char_arg(argc, argv, "-ntype", " ");
+    char ntype = input_ntypechar[0];
+    if (!isblank(ntype))
+        input_ntype = ntype;
+    configtree.put("tkdnn.ntype", input_ntype);
+    std::cout << "input_ntype is " << input_ntype << "\n";
 
-    int n_classes = find_int_arg(argc, argv, "-n_classes", 80);
+    n_classes = find_int_arg(argc, argv, "-n_classes", n_classes);
+    configtree.put("tkdnn.n_classes", n_classes);
     
-    int n_batch = find_int_arg(argc, argv, "-n_batch", 1);
+    n_batch = find_int_arg(argc, argv, "-n_batch", n_batch);
+    configtree.put("tkdnn.n_batch", n_batch);
 
-    int show = find_int_arg(argc, argv, "-show", 1);
+    show = find_int_arg(argc, argv, "-show", show);
+    configtree.put("tkdnn.show", show);
 
-    int save = find_int_arg(argc, argv, "-save", 0);
+    save = find_int_arg(argc, argv, "-save", save);
     SAVE_RESULT = save;
+    configtree.put("tkdnn.SAVE_RESULT", SAVE_RESULT);
 
-    int ids = find_int_arg(argc, argv, "-ids", 0);
+    ids = find_int_arg(argc, argv, "-ids", ids);
+    configtree.put("tkdnn.ids", ids);
 
-    int mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", 0);
+    mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", mjpeg_port);
+    configtree.put("tkdnn.mjpeg_port", mjpeg_port);
   
-    int extyolo = find_int_arg(argc, argv, "-extyolo", 0);
+    extyolo = find_int_arg(argc, argv, "-extyolo", extyolo);
+    configtree.put("tkdnn.extyolo", extyolo);
 
-    int video_mode = find_int_arg(argc, argv, "-video_mode", 0);
+    video_mode = find_int_arg(argc, argv, "-video_mode", video_mode);
+    configtree.put("tkdnn.video_mode", video_mode);
+
+    frame_rate = find_int_arg(argc, argv, "-frame_rate", frame_rate);
+    configtree.put("tkdnn.frame_rate", frame_rate);
+
+    if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
+    {
+        std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
+        ini_parser::write_ini("testconfiguration.ini", configtree);
+    }
 
     if (n_batch < 1 || n_batch > 64)
         FatalError("Batch dim not supported");
@@ -75,7 +198,7 @@ int main(int argc, char *argv[])
 
     tk::dnn::DetectionNN *detNN;
 
-    switch (ntype)
+    switch (input_ntype)
     {
     case 'y':
         detNN = &yolo;
@@ -107,7 +230,9 @@ else
     video = new IDSVideoCapture;
 }
 
-video->init(input, video_mode);
+video->init(inputvideo, video_mode);
+
+// video->
 
 video->start();
 
