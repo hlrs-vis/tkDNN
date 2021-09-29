@@ -22,6 +22,7 @@ public:
     void start();
     void stop();
     bool init(std::string input="/dev/video1", int video_mode = 1);
+    void setFrameRate(int fps);
     //bool init();
     int getWidth();
     int getHeight();

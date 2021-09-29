@@ -91,3 +91,8 @@ void OpenCVVideoCapture::start()
 {
 }
 */
+
+void OpenCVVideoCapture::setFrameRate(int fps)
+{
+    cap.set(cv::CAP_PROP_FPS,fps);
+}

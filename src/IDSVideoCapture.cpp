@@ -14,7 +14,7 @@ bool IDSVideoCapture::init(std::string input, int video_mode)
     else
     {
         std::cout << "camera started\n";
-        IDSCam.setFrameRate(50);
+        IDSCam.setFrameRate(30);
     }
     return 0;
 }
@@ -63,3 +63,8 @@ void IDSVideoCapture::start()
 {
 }
 */
+
+void IDSVideoCapture::setFrameRate(int fps)
+{
+       IDSCam.setFrameRate(fps);
+}
