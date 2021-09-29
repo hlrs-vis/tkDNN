@@ -61,6 +61,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DOPENCV")
 # gives problems in cross-compiling, probably malformed cmake config
 find_package(yaml-cpp REQUIRED)
 
+find_package(Boost REQUIRED)
+
 #-------------------------------------------------------------------------------
 # IDS Camera Library
 #-------------------------------------------------------------------------------
