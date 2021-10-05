@@ -55,3 +55,8 @@ void VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_i
     }
     std::cout << n_batch << " images retrieved, " << num_elems_removed << " removed, queue size is " << m_queue.size()<< "\n";
 }
+
+void VideoAcquisition::flip()
+{
+    m_flipped = true;
+}

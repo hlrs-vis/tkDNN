@@ -25,6 +25,7 @@ public:
     virtual bool init(std::string, int) = 0;
     void getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_images, int n_batch);
     virtual void setFrameRate(int) = 0;
+    void flip();
 
 protected: 
     bool m_isOpened = false;
@@ -35,6 +36,7 @@ protected:
     long long int m_frame_id = 0;
     int m_max_number_queued = 100;
     int m_frames_dropped = 0;
+    bool m_flipped = 0;
 
 private:
 

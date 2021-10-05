@@ -85,6 +85,7 @@ int main(int argc, char *argv[])
     int extyolo = 0;
     int video_mode = 0;
     int frame_rate = 30;
+    int flip = 0;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -122,7 +123,8 @@ int main(int argc, char *argv[])
                 video_mode = configtree.get<int>("tkdnn.video_mode");
             if (child.first == "frame_rate")
                 frame_rate = configtree.get<int>("tkdnn.frame_rate");
-            
+             if (child.first == "flip")
+                flip = configtree.get<int>("tkdnn.flip");
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -182,6 +184,9 @@ int main(int argc, char *argv[])
     frame_rate = find_int_arg(argc, argv, "-frame_rate", frame_rate);
     configtree.put("tkdnn.frame_rate", frame_rate);
 
+    flip = find_int_arg(argc, argv, "-flip", flip);
+    configtree.put("tkdnn.flip", flip);
+
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
@@ -231,6 +236,8 @@ else
 }
 
 video->init(inputvideo, video_mode);
+if (flip)
+    video->flip();
 
 // video->
 
@@ -315,6 +322,13 @@ video->start();
         if (json_port > 0)
         {
             send_json(batch_images, *detNN, json_port, 40000);
+        }
+
+        if (frames_processed % 100 == 0)
+        {
+            cv::String outFileName = "test" + std::to_string(frames_processed);
+            outFileName.append(".jpg");
+            cv::imwrite(outFileName,batch_frame[0]);
         }
     }
 
