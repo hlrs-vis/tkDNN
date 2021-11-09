@@ -55,6 +55,7 @@ static int close_socket(SOCKET s) {
 #else   // _WIN32 - else: nix
 #include "httpunistd.h"
 #include "DetectionNN.h"
+#include "JsonComposer.h"
 #include <fcntl.h>
 #include <sys/time.h>
 #include <sys/types.h>
@@ -552,6 +553,7 @@ void send_json_custom(char const* send_buf, int port, int timeout)
 // ]
 //},
 
+/*
 char *detection_to_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, char *filename)
 {
     float Yx, Yy, Yw, Yh;
@@ -626,7 +628,17 @@ char *detection_to_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk
 
     return send_buf;
 }
+*/
 
+void send_json(char *send_buf, int port, int timeout)
+{
+    try {
+        send_json_custom(send_buf, port, timeout);
+    }
+    catch (...) {
+        cerr << " Error in send_json() function \n";
+    }
+}
 
 void send_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, int port, int timeout)
 {

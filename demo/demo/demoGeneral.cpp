@@ -1,9 +1,11 @@
 #include <iostream>
+#include <fstream>
 #include <signal.h>
 #include <stdlib.h> /* srand, rand */
 #include <unistd.h>
 #include <mutex>
 #include <https_stream.h> //https_stream
+#include <JsonComposer.h>
 
 #include <chrono>
 #include <ctime>
@@ -23,6 +25,8 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/xml_parser.hpp>
+
+#include <boost/algorithm/string.hpp>
 
 bool gRun;
 bool SAVE_RESULT = false;
@@ -72,6 +76,8 @@ int main(int argc, char *argv[])
     }
 
     int json_port = 0;
+    std::string json_file;
+    std::ofstream jsonfilestream;
     std::string inputnet = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
@@ -86,6 +92,7 @@ int main(int argc, char *argv[])
     int video_mode = 0;
     int frame_rate = 30;
     int flip = 0;
+    bool playback = false;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -99,6 +106,8 @@ int main(int argc, char *argv[])
 
             if (child.first == "json_port")
                 json_port = configtree.get<int>("tkdnn.json_port");
+            if (child.first == "json_file")
+                json_port = configtree.get<char>("tkdnn.json_file");
             if (child.first == "inputnet")
                 inputnet = configtree.get<std::string>("tkdnn.inputnet");
             if (child.first == "inputvideo")
@@ -123,8 +132,10 @@ int main(int argc, char *argv[])
                 video_mode = configtree.get<int>("tkdnn.video_mode");
             if (child.first == "frame_rate")
                 frame_rate = configtree.get<int>("tkdnn.frame_rate");
-             if (child.first == "flip")
+            if (child.first == "flip")
                 flip = configtree.get<int>("tkdnn.flip");
+            if (child.first == "playback")
+                playback = configtree.get<bool>("tkdnn.playback");
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -133,6 +144,15 @@ int main(int argc, char *argv[])
     json_port = find_int_arg(argc, argv, "-json_port", json_port);
     configtree.put("tkdnn.json_port", json_port);
 
+
+    // JSON-Filename
+    { 
+    char* jsonfilechar = find_char_arg(argc, argv, "-json_file", "");
+    std::string jsonfile(jsonfilechar);
+    if (!jsonfile.empty())
+        json_file = jsonfile;
+    configtree.put("tkdnn.json_file", jsonfile);  
+    }
 
     // Net
     char* inputnetchar = find_char_arg(argc, argv, "-net", "");
@@ -187,6 +207,9 @@ int main(int argc, char *argv[])
     flip = find_int_arg(argc, argv, "-flip", flip);
     configtree.put("tkdnn.flip", flip);
 
+    playback = find_int_arg(argc, argv, "-playback", playback);
+    configtree.put("tkdnn.playback", playback);
+
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
@@ -224,6 +247,22 @@ int main(int argc, char *argv[])
     gRun = true;
 
 bool draw = (show || SAVE_RESULT);
+bool write_json;
+if (!json_file.empty());
+{
+    write_json = true;
+    std::string json_extension = ".json";
+    if (boost::algorithm::iends_with(json_file,json_extension))
+        json_file = json_file.substr(0, json_file.size()-5);
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+    char mbstr[100];
+    std::strftime(mbstr, sizeof(mbstr), "-%F-%T.json", std::localtime(&t_c));
+    std::put_time(std::localtime(&t_c), "-%F-%T.json");
+    json_file = json_file.append(mbstr);
+    jsonfilestream.open(json_file);
+}
+
 
 VideoAcquisition *video;
 
@@ -236,6 +275,12 @@ else
 }
 
 video->init(inputvideo, video_mode);
+
+if (playback){
+    // Slow down image acquisition instead of removing images from queue
+    video->setPlayback();
+}
+
 if (flip)
     video->flip();
 
@@ -319,9 +364,19 @@ video->start();
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
         }
         
-        if (json_port > 0)
+        if (write_json || json_port > 0)
         {
-            send_json(batch_images, *detNN, json_port, 40000);
+            //send_json(batch_images, *detNN, json_port, 40000);
+            char *send_buf = detection_to_json(batch_images, *detNN, NULL);
+            if (json_port > 0)
+            {
+                send_json(send_buf, json_port, 40000);
+            }
+            if (!json_file.empty())
+            {
+                jsonfilestream << send_buf;
+            }
+            free(send_buf);
         }
 
         if (frames_processed % 100 == 0)
@@ -333,6 +388,7 @@ video->start();
     }
 
     video->stop();
+    jsonfilestream.close();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
 
     std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
