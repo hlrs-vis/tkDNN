@@ -64,8 +64,16 @@ int OpenCVVideoCapture::getWidth()
 void OpenCVVideoCapture::acquisition_thread()
 {
     TypewithMetadata<cv::Mat> newframe;
+
     while (m_isRunning)
     {
+        if (m_playback)
+        {
+            while (m_queue.size() >= m_max_number_queued)
+            {
+                std::this_thread::sleep_for(std::chrono::milliseconds(10));
+            }
+        }
         cap >> newframe.data;
         if (m_flipped)
             cv::flip(newframe.data, newframe.data, -1);
