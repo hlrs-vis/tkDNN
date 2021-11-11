@@ -14,7 +14,7 @@ void VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_i
     {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
-    if (m_queue.size() > m_max_number_queued+(n_batch+1))
+    if (m_queue.size() > m_max_number_queued+(n_batch))
     {
         int num_elems_to_get = m_queue.size()-m_max_number_queued;
         //std::cout << num_elems_to_get << " elements will be removed\n";
@@ -53,7 +53,7 @@ void VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_i
             m_queue.pop_front();
         }
     }
-    std::cout << n_batch << " images retrieved, " << num_elems_removed << " removed, queue size is " << m_queue.size()<< "\n";
+    // std::cout << n_batch << " images retrieved, " << num_elems_removed << " removed, queue size is " << m_queue.size()<< "\n";
 }
 
 void VideoAcquisition::flip()
