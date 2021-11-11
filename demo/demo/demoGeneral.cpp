@@ -76,7 +76,7 @@ int main(int argc, char *argv[])
     }
 
     int json_port = 0;
-    std::string json_file;
+    std::string json_file = std::string();
     std::ofstream jsonfilestream;
     std::string inputnet = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
@@ -146,13 +146,12 @@ int main(int argc, char *argv[])
 
 
     // JSON-Filename
-    { 
     char* jsonfilechar = find_char_arg(argc, argv, "-json_file", "");
-    std::string jsonfile(jsonfilechar);
-    if (!jsonfile.empty())
+    if (jsonfilechar && jsonfilechar[0]){
+        std::string jsonfile(jsonfilechar);
         json_file = jsonfile;
-    configtree.put("tkdnn.json_file", jsonfile);  
     }
+    configtree.put("tkdnn.json_file", json_file); 
 
     // Net
     char* inputnetchar = find_char_arg(argc, argv, "-net", "");
@@ -248,7 +247,8 @@ int main(int argc, char *argv[])
 
 bool draw = (show || SAVE_RESULT);
 bool write_json;
-if (!json_file.empty());
+std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
+if (json_file.size()>0)
 {
     write_json = true;
     std::string json_extension = ".json";
@@ -257,8 +257,8 @@ if (!json_file.empty());
     std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
     const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
     char mbstr[100];
-    std::strftime(mbstr, sizeof(mbstr), "-%F-%T.json", std::localtime(&t_c));
-    std::put_time(std::localtime(&t_c), "-%F-%T.json");
+    std::strftime(mbstr, sizeof(mbstr), "_%F_%H-%M-%S.json", std::localtime(&t_c));
+    //std::put_time(std::localtime(&t_c), "-%F-%T.json");
     json_file = json_file.append(mbstr);
     jsonfilestream.open(json_file);
 }
