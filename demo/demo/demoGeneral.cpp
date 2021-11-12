@@ -93,6 +93,7 @@ int main(int argc, char *argv[])
     int frame_rate = 30;
     int flip = 0;
     bool playback = false;
+    bool save_calibration_images = 0;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -136,6 +137,8 @@ int main(int argc, char *argv[])
                 flip = configtree.get<int>("tkdnn.flip");
             if (child.first == "playback")
                 playback = configtree.get<bool>("tkdnn.playback");
+            if (child.first == "save_calibration_images")
+                save_calibration_images = configtree.get<bool>("tkdnn.save_calibration_images");
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -209,6 +212,9 @@ int main(int argc, char *argv[])
     playback = find_int_arg(argc, argv, "-playback", playback);
     configtree.put("tkdnn.playback", playback);
 
+    save_calibration_images = find_int_arg(argc, argv, "-save_calibration_images", save_calibration_images);
+    configtree.put("tkdnn.save_calibration_images", save_calibration_images);
+
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
@@ -261,6 +267,7 @@ if (json_file.size()>0)
     //std::put_time(std::localtime(&t_c), "-%F-%T.json");
     json_file = json_file.append(mbstr);
     jsonfilestream.open(json_file);
+    jsonfilestream << "[";
 }
 
 
@@ -313,6 +320,7 @@ video->start();
 
     std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
     int frames_processed = 0;
+    int json_frames_written = 0;
     while (gRun)
     {
         //ensure queue holds enough pictures for batch size
@@ -374,20 +382,29 @@ video->start();
             }
             if (!json_file.empty())
             {
+                if (json_frames_written != 0)
+                {
+                    jsonfilestream << ",\n";
+                }
                 jsonfilestream << send_buf;
+                json_frames_written++;
             }
             free(send_buf);
         }
 
-        if (frames_processed % 100 == 0)
+        if (save_calibration_images)
         {
-            cv::String outFileName = "test" + std::to_string(frames_processed);
-            outFileName.append(".jpg");
-            cv::imwrite(outFileName,batch_frame[0]);
+            if (frames_processed % 100 == 0)
+            {
+                cv::String outFileName = "test" + std::to_string(frames_processed);
+                outFileName.append(".jpg");
+                cv::imwrite(outFileName,batch_frame[0]);
+            }
         }
     }
 
     video->stop();
+    jsonfilestream << "]";
     jsonfilestream.close();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
 
