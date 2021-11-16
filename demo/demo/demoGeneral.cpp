@@ -78,7 +78,7 @@ int main(int argc, char *argv[])
     int json_port = 0;
     std::string json_file = std::string();
     std::ofstream jsonfilestream;
-    std::string inputnet = std::string("yolo4_int8.rt");
+    std::string net = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
     std::cout << "input_ntype is " << input_ntype << "\n";
@@ -108,9 +108,12 @@ int main(int argc, char *argv[])
             if (child.first == "json_port")
                 json_port = configtree.get<int>("tkdnn.json_port");
             if (child.first == "json_file")
-                json_port = configtree.get<char>("tkdnn.json_file");
+                json_file = configtree.get<std::string>("tkdnn.json_file");
             if (child.first == "inputnet")
-                inputnet = configtree.get<std::string>("tkdnn.inputnet");
+            {
+                net = configtree.get<std::string>("tkdnn.inputnet");
+                std::cout << COL_RED << "input net: " << net << "\n" << COL_END;
+            }
             if (child.first == "inputvideo")
                 inputvideo = configtree.get<std::string>("tkdnn.inputvideo");
             if (child.first == "input_ntype")
@@ -158,10 +161,10 @@ int main(int argc, char *argv[])
 
     // Net
     char* inputnetchar = find_char_arg(argc, argv, "-net", "");
-    std::string net(inputnetchar);
-    if (!net.empty()) 
-        inputnet = net;
-    configtree.put("tkdnn.inputnet", inputnet);   
+    std::string inputnet(inputnetchar);
+    if (!inputnet.empty()) 
+        net = inputnet;
+    configtree.put("tkdnn.inputnet", net);   
 
     // Input 
     char* inputvideochar = find_char_arg(argc, argv, "-input", "");
@@ -220,7 +223,11 @@ int main(int argc, char *argv[])
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
         ini_parser::write_ini("testconfiguration.ini", configtree);
     }
-
+    else
+    {
+        std::cout << COL_GREEN << "config file given, current configuration saved to: \"testconfiguration2.ini\" \n" << COL_END;
+        ini_parser::write_ini("testconfiguration2.ini", configtree);
+    }
     if (n_batch < 1 || n_batch > 64)
         FatalError("Batch dim not supported");
 
