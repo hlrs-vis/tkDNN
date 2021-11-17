@@ -640,6 +640,7 @@ void send_json(char *send_buf, int port, int timeout)
     }
 }
 
+/*
 void send_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, int port, int timeout)
 {
     try {
@@ -653,7 +654,7 @@ void send_json(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::De
     catch (...) {
         cerr << " Error in send_json() function \n";
     }
-}
+}*/
 
 // ----------------------------------------
 

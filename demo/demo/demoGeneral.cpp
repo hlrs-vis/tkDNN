@@ -45,6 +45,8 @@ int main(int argc, char *argv[])
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
+    JsonComposer* json = NULL;
+
     ptree configtree;
     char *iniconfig = find_char_arg(argc, argv, "-ini", "");
     std::string iniConfig(iniconfig); 
@@ -260,6 +262,8 @@ int main(int argc, char *argv[])
 
 bool draw = (show || SAVE_RESULT);
 bool write_json;
+
+
 std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
 if (json_file.size()>0)
 {
@@ -277,6 +281,10 @@ if (json_file.size()>0)
     jsonfilestream << "[";
 }
 
+ if (write_json || json_port > 0)
+ {
+    json = new JsonComposer;
+ }
 
 VideoAcquisition *video;
 
@@ -306,6 +314,11 @@ if (save_calibration_images)
 }
 
 video->start();
+
+if (json)
+{
+    json->setResolution(video->getWidth(), video->getHeight());
+}
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
@@ -387,7 +400,7 @@ video->start();
         if (write_json || json_port > 0)
         {
             //send_json(batch_images, *detNN, json_port, 40000);
-            char *send_buf = detection_to_json(batch_images, *detNN, NULL);
+            char *send_buf = json->detection_to_json(batch_images, *detNN, NULL);
             if (json_port > 0)
             {
                 send_json(send_buf, json_port, 40000);
