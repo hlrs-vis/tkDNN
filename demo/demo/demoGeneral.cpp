@@ -298,7 +298,12 @@ if (playback){
 if (flip)
     video->flip();
 
-// video->
+cv::Mat fgMask, backGroundImage;
+Ptr<BackgroundSubtractor> pBackSub;
+if (save_calibration_images)
+{
+    pBackSub = createBackgroundSubtractorKNN();
+}
 
 video->start();
 
@@ -342,7 +347,7 @@ video->start();
         for (int bi = 0; bi < n_batch; ++bi)
         {
             // this will be used for the visualisation
-            if (draw)
+            if (draw || save_calibration_images)
                 batch_frame.push_back((*batch_images)[bi].data);
 
             // this will be resized to the net format
@@ -350,7 +355,7 @@ video->start();
                 //batch_dnn_input.push_back((*batch_images)[bi].data);
                 batch_dnn_input.push_back(std::move((*batch_images)[bi].data));
             else
-            batch_dnn_input.push_back((*batch_images)[bi].data);
+                batch_dnn_input.push_back((*batch_images)[bi].data);
         }
 
         //inference
@@ -401,12 +406,16 @@ video->start();
 
         if (save_calibration_images)
         {
+            pBackSub->apply(batch_frame[0], fgMask, 0.01);
+            pBackSub->getBackgroundImage(backGroundImage);
+            cv::imshow("background", backGroundImage);
             if (frames_processed % 100 == 0)
             {
                 cv::String outFileName = "test" + std::to_string(frames_processed);
                 outFileName.append(".jpg");
                 cv::imwrite(outFileName,batch_frame[0]);
             }
+
         }
     }
 
