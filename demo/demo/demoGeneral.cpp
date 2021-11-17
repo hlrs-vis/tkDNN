@@ -105,7 +105,7 @@ int main(int argc, char *argv[])
     {
         for(auto child : configtree.get_child("tkdnn"))
         {
-            std::cout << COL_RED << "inside configtree.\n" << COL_END;
+            // std::cout << COL_RED << "inside configtree.\n" << COL_END;
 
             if (child.first == "json_port")
                 json_port = configtree.get<int>("tkdnn.json_port");
@@ -114,7 +114,7 @@ int main(int argc, char *argv[])
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
-                std::cout << COL_RED << "input net: " << net << "\n" << COL_END;
+                // std::cout << COL_RED << "input net: " << net << "\n" << COL_END;
             }
             if (child.first == "inputvideo")
                 inputvideo = configtree.get<std::string>("tkdnn.inputvideo");
@@ -264,7 +264,7 @@ bool draw = (show || SAVE_RESULT);
 bool write_json;
 
 
-std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
+// std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
 if (json_file.size()>0)
 {
     write_json = true;
