@@ -151,6 +151,13 @@ int main(int argc, char *argv[])
                 save_calibration_images = configtree.get<bool>("tkdnn.save_calibration_images");
             if (child.first == "generate_background_image")
                 generate_background_image = configtree.get<bool>("tkdnn.generate_background_image");
+            if (child.first == "calibration_frames_target")
+                calibration_frames_target = configtree.get<int>("tkdnn.calibration_frames_target");
+            if (child.first == "calibration_frames_skip_factor")
+                calibration_frames_skip_factor = configtree.get<int>("tkdnn.calibration_frames_skip_factor");
+            if (child.first == "continuous_background_images")
+                continuous_background_images = configtree.get<bool>("tkdnn.continuous_background_images");
+
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -229,6 +236,15 @@ int main(int argc, char *argv[])
 
     generate_background_image = find_int_arg(argc, argv, "-generate_background_image", generate_background_image);
     configtree.put("tkdnn.generate_background_image", generate_background_image);
+
+    calibration_frames_target = find_int_arg(argc, argv, "-calibration_frames_target", calibration_frames_target);
+    configtree.put("tkdnn.calibration_frames_target", calibration_frames_target);
+
+    calibration_frames_skip_factor = find_int_arg(argc, argv, "-calibration_frames_skip_factor", calibration_frames_skip_factor);
+    configtree.put("tkdnn.calibration_frames_skip_factor", calibration_frames_skip_factor);
+
+    continuous_background_images = find_int_arg(argc, argv, "-continuous_background_images", continuous_background_images);
+    configtree.put("tkdnn.continuous_background_images", continuous_background_images);
 
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
