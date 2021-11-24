@@ -96,6 +96,11 @@ int main(int argc, char *argv[])
     int flip = 0;
     bool playback = false;
     bool save_calibration_images = 0;
+    bool generate_background_image = 0;
+    int calibration_frames_target = 1000;
+    int calibration_frames_skip_factor = 15;
+    bool continuous_background_images = true;
+
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -144,6 +149,8 @@ int main(int argc, char *argv[])
                 playback = configtree.get<bool>("tkdnn.playback");
             if (child.first == "save_calibration_images")
                 save_calibration_images = configtree.get<bool>("tkdnn.save_calibration_images");
+            if (child.first == "generate_background_image")
+                generate_background_image = configtree.get<bool>("tkdnn.generate_background_image");
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -220,6 +227,9 @@ int main(int argc, char *argv[])
     save_calibration_images = find_int_arg(argc, argv, "-save_calibration_images", save_calibration_images);
     configtree.put("tkdnn.save_calibration_images", save_calibration_images);
 
+    generate_background_image = find_int_arg(argc, argv, "-generate_background_image", generate_background_image);
+    configtree.put("tkdnn.generate_background_image", generate_background_image);
+
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
@@ -263,6 +273,12 @@ int main(int argc, char *argv[])
 bool draw = (show || SAVE_RESULT);
 bool write_json;
 
+std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+char date[100];
+std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
+
+
 
 // std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
 if (json_file.size()>0)
@@ -271,20 +287,16 @@ if (json_file.size()>0)
     std::string json_extension = ".json";
     if (boost::algorithm::iends_with(json_file,json_extension))
         json_file = json_file.substr(0, json_file.size()-5);
-    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-    const std::time_t t_c = std::chrono::system_clock::to_time_t(now);
-    char mbstr[100];
-    std::strftime(mbstr, sizeof(mbstr), "_%F_%H-%M-%S.json", std::localtime(&t_c));
-    //std::put_time(std::localtime(&t_c), "-%F-%T.json");
-    json_file = json_file.append(mbstr);
+    json_file = json_file.append(date);
+    json_file = json_file.append(".json");
     jsonfilestream.open(json_file);
     jsonfilestream << "[";
 }
 
- if (write_json || json_port > 0)
- {
-    json = new JsonComposer;
- }
+if (write_json || json_port > 0)
+{
+json = new JsonComposer;
+}
 
 VideoAcquisition *video;
 
@@ -306,12 +318,10 @@ if (playback){
 if (flip)
     video->flip();
 
-cv::Mat fgMask, backGroundImage;
-Ptr<BackgroundSubtractor> pBackSub;
-if (save_calibration_images)
-{
-    pBackSub = createBackgroundSubtractorKNN();
-}
+cv::Size image_size= cv::Size(video->getWidth(), video->getHeight());
+
+cv::Mat avgImgConverted(image_size, CV_64FC3);
+Mat H(image_size, CV_64FC3, 0.0);
 
 video->start();
 
@@ -346,10 +356,12 @@ if (json)
     std::chrono::time_point<std::chrono::system_clock> start_time = std::chrono::system_clock::now();
     int frames_processed = 0;
     int json_frames_written = 0;
+    int calibration_frames_taken = 0;
+
+
     while (gRun)
     {
         //ensure queue holds enough pictures for batch size
-
 
         batch_dnn_input.clear();
         batch_frame.clear();
@@ -363,19 +375,71 @@ if (json)
             if (draw || save_calibration_images)
                 batch_frame.push_back((*batch_images)[bi].data);
 
+            if (generate_background_image)
+            {
+                if (calibration_frames_taken < calibration_frames_target)
+                {
+                    if (frames_processed % calibration_frames_skip_factor == 0)
+                    {
+                        cv::Mat accFrame = (*batch_images)[bi].data;
+
+                        for(int i = 0; i < H.rows; i++)
+                            for(int j = 0; j < H.cols; j++)
+                                {
+                                H.at<Vec3d>(i,j)[0]+=double(accFrame.at<Vec3b>(i,j)[0]);
+                                H.at<Vec3d>(i,j)[1]+=double(accFrame.at<Vec3b>(i,j)[1]);
+                                H.at<Vec3d>(i,j)[2]+=double(accFrame.at<Vec3b>(i,j)[2]);
+                                }
+
+                        calibration_frames_taken++;
+                        avgImgConverted = H;
+                        avgImgConverted.convertTo(avgImgConverted, CV_8UC3, 1.0/calibration_frames_taken);
+
+                        if (show)
+                            cv::imshow("averageConverted", avgImgConverted);
+                    }
+                }
+                else if (calibration_frames_taken == calibration_frames_target)
+                {
+                    cv::String outFileName = "background_image";
+                    outFileName.append(date);
+                    now = std::chrono::system_clock::now();
+                    t_c = std::chrono::system_clock::to_time_t(now);
+                    std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
+                    outFileName.append(".jpg");
+                    cv::imwrite(outFileName,avgImgConverted);
+                    std::cout << "background image saved after " << frames_processed << "processed frames, " << calibration_frames_taken << " frames used." << std::endl;
+                    if (continuous_background_images)
+                    {
+                        calibration_frames_taken = 0;
+                        //H.zeros(image_size,CV_64FC3);
+                        for(int i = 0; i < H.rows; i++)
+                            for(int j = 0; j < H.cols; j++)
+                                {
+                                H.at<Vec3d>(i,j)[0]=0.0;
+                                H.at<Vec3d>(i,j)[1]=0.0;
+                                H.at<Vec3d>(i,j)[2]=0.0;
+                                }
+                    }
+                    else
+                    {
+                        generate_background_image = false;
+                    }
+                }
+            }
             // this will be resized to the net format
             if (!draw)
                 //batch_dnn_input.push_back((*batch_images)[bi].data);
                 batch_dnn_input.push_back(std::move((*batch_images)[bi].data));
             else
                 batch_dnn_input.push_back((*batch_images)[bi].data);
+            frames_processed += 1;
         }
 
         //inference
         detNN->update(batch_dnn_input, n_batch);
         if (draw)
             detNN->draw(batch_frame,extyolo);
-        frames_processed += n_batch;
 
         if (show)
         {
@@ -417,11 +481,11 @@ if (json)
             free(send_buf);
         }
 
+
+
+
         if (save_calibration_images)
         {
-            pBackSub->apply(batch_frame[0], fgMask, 0.01);
-            pBackSub->getBackgroundImage(backGroundImage);
-            cv::imshow("background", backGroundImage);
             if (frames_processed % 100 == 0)
             {
                 cv::String outFileName = "test" + std::to_string(frames_processed);
