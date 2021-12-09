@@ -224,7 +224,7 @@ target_link_libraries(seg_demo tkDNN)
 message("install dir:" ${CMAKE_INSTALL_PREFIX})
 install(DIRECTORY include/ DESTINATION include/)
 install(TARGETS tkDNN kernels DESTINATION lib)
-install(TARGETS test_simple test_mnist test_mnistRT test_rtinference demo map_demo DESTINATION bin)
+install(TARGETS test_simple test_mnist test_mnistRT test_rtinference demo map_demo demoGeneral DESTINATION bin)
 install(DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/cmake/" # source directory
         DESTINATION "share/tkDNN/cmake/" # target directory
 )
