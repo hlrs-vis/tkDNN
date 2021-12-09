@@ -1,0 +1,16 @@
+# this is /lib/systemd/system/tkdnn.service
+
+[Unit]
+Description=tkdnn server daemon
+Documentation=https://github.com/tobst/tkdnn
+After=syslog.target
+
+[Service]
+# see man systemd.service 
+Restart=on-failure
+RestartSec=5s 
+ExecStart=/usr/local/src/tkDNN/tkdnn-start.sh
+ExecStop=/usr/local/src/tkdnn-stop.sh
+
+[Install]
+WantedBy=multi-user.target 
