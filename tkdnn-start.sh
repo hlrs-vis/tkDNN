@@ -9,4 +9,4 @@ v4l2-ctl -d 0 -c exposure_auto_priority=1
 v4l2-ctl -d 0 -c backlight_compensation=0
 
 cd /usr/local/src/tkDNN/build/
-./demoGeneral -ini camera1.ini 
+./demoGeneral -ini config_visagx1-brio.ini 
