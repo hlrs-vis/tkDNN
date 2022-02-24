@@ -100,7 +100,8 @@ int main(int argc, char *argv[])
     int calibration_frames_target = 1000;
     int calibration_frames_skip_factor = 15;
     bool continuous_background_images = true;
-
+    std::string save_json_path = std::string("/mnt/sd-card/cameradata/json/");
+    std::string save_background_image_path = std::string("/mnt/sd-card/cameradata/images/");
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -157,6 +158,10 @@ int main(int argc, char *argv[])
                 calibration_frames_skip_factor = configtree.get<int>("tkdnn.calibration_frames_skip_factor");
             if (child.first == "continuous_background_images")
                 continuous_background_images = configtree.get<bool>("tkdnn.continuous_background_images");
+            if (child.first == "save_json_path")
+                save_json_path = configtree.get<std::string>("tkdnn.save_json_path");
+            if (child.first == "save_background_image_path")
+                save_background_image_path = configtree.get<std::string>("tkdnn.save_background_image_path");
 
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
@@ -246,6 +251,25 @@ int main(int argc, char *argv[])
     continuous_background_images = find_int_arg(argc, argv, "-continuous_background_images", continuous_background_images);
     configtree.put("tkdnn.continuous_background_images", continuous_background_images);
 
+
+    // JSON saving folder
+    char* jsonfolderchar = find_char_arg(argc, argv, "-save_json_path", "");
+    if (jsonfolderchar && jsonfolderchar[0]){
+        std::string jsonfolder(jsonfolderchar);
+        save_json_path = jsonfolder;
+    }
+    configtree.put("tkdnn.save_json_path", save_json_path);
+
+
+    // background image  saving folder
+    char* imagefolderchar = find_char_arg(argc, argv, "-save_background_image_path", "");
+    if (imagefolderchar && imagefolderchar[0]){
+        std::string imagefolder(imagefolderchar);
+        save_background_image_path = imagefolder;
+    }
+    configtree.put("tkdnn.save_background_image_path", save_background_image_path);
+
+
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
@@ -298,7 +322,7 @@ std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
 
 // std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
 if (json_file.size()>0)
-{
+{    
     write_json = true;
     std::string json_extension = ".json";
     if (boost::algorithm::iends_with(json_file,json_extension))
@@ -417,13 +441,16 @@ if (json)
                 }
                 else if (calibration_frames_taken == calibration_frames_target)
                 {
-                    cv::String outFileName = "background_image";
+                    cv::String outFileName = save_background_image_path;
+		    outFileName.append("/background_image");
+		    //cv::String outFileName = "background_image";
                     outFileName.append(date);
                     now = std::chrono::system_clock::now();
                     t_c = std::chrono::system_clock::to_time_t(now);
                     std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
                     outFileName.append(".jpg");
-                    cv::imwrite(outFileName,avgImgConverted);
+                    std::cout << COL_RED << "Trying to save" << outFileName << "\n" << COL_END;
+		    cv::imwrite(outFileName,avgImgConverted);
                     std::cout << "background image saved after " << frames_processed << "processed frames, " << calibration_frames_taken << " frames used." << std::endl;
                     if (continuous_background_images)
                     {
