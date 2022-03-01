@@ -317,8 +317,15 @@ std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clo
 std::time_t t_c = std::chrono::system_clock::to_time_t(now);
 char date[100];
 std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
+auto hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
+int day_recording_started = int(hours/24);
 
-
+//std::cout << "Hours since epoch: " << int(hours) << std::endl;
+//std::cout << "Days since epoch: " << int(hours/24) << std::endl;
+//auto tomorrow = now + std::chrono::hours(24);
+//auto tomorrow_hours = std::chrono::duration_cast<std::chrono::hours>(tomorrow.time_since_epoch()).count();
+//std::cout << "Tomorrow Hours since epoch: " << int(tomorrow_hours) << std::endl;
+//std::cout << "Tomorrow Days since epoch: " << int(tomorrow_hours/24) << std::endl;
 
 // std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
 if (json_file.size()>0)
@@ -447,6 +454,11 @@ if (json)
                     outFileName.append(date);
                     now = std::chrono::system_clock::now();
                     t_c = std::chrono::system_clock::to_time_t(now);
+                    //check for date change, if a new day has started end program to be restarted
+                    hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
+                    int day_now = int(hours/24);
+                    if (day_now != day_recording_started)
+                        gRun = false;
                     std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
                     outFileName.append(".jpg");
                     std::cout << COL_RED << "Trying to save" << outFileName << "\n" << COL_END;
@@ -468,6 +480,19 @@ if (json)
                     {
                         generate_background_image = false;
                     }
+                }
+            }
+            else
+            {
+                if (frames_processed % 1000 == 0)
+                {
+                now = std::chrono::system_clock::now();
+                t_c = std::chrono::system_clock::to_time_t(now);
+                //check for date change, if a new day has started end program to be restarted
+                hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
+                int day_now = int(hours/24);
+                if (day_now != day_recording_started)
+                    gRun = false;
                 }
             }
             // this will be resized to the net format
