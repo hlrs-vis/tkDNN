@@ -102,6 +102,9 @@ int main(int argc, char *argv[])
     bool continuous_background_images = true;
     std::string save_json_path = std::string("/mnt/sd-card/cameradata/json/");
     std::string save_background_image_path = std::string("/mnt/sd-card/cameradata/images/");
+    std::string cfg_input = std::string("../tests/darknet/cfg/yolo4.cfg");
+    std::string name_input = std::string("../tests/darknet/names/coco.names");
+    float conf_thresh = 0.3;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -162,6 +165,12 @@ int main(int argc, char *argv[])
                 save_json_path = configtree.get<std::string>("tkdnn.save_json_path");
             if (child.first == "save_background_image_path")
                 save_background_image_path = configtree.get<std::string>("tkdnn.save_background_image_path");
+            if (child.first == "name_input")
+                name_input = configtree.get<std::string>("tkdnn.name_input");
+            if (child.first == "cfg_input")
+                cfg_input = configtree.get<std::string>("tkdnn.cfg_input");
+            if (child.first == "conf_thresh")
+                conf_thresh = configtree.get<float>("tkdnn.conf_thresh");
 
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
@@ -269,6 +278,21 @@ int main(int argc, char *argv[])
     }
     configtree.put("tkdnn.save_background_image_path", save_background_image_path);
 
+    // Config Path
+    char* cfg_input_char = find_char_arg(argc, argv, "-save_json_path", "");
+    if (cfg_input_char && cfg_input_char[0]){
+        std::string cfg_input_string(cfg_input_char);
+        cfg_input = cfg_input_string;
+    }
+    configtree.put("tkdnn.cfg_input", cfg_input);
+
+    // Config Path
+    char* name_input_char = find_char_arg(argc, argv, "-save_json_path", "");
+    if (name_input_char && name_input_char[0]){
+        std::string name_input_string(name_input_char);
+        name_input = name_input_string;
+    }
+    configtree.put("tkdnn.name_input", name_input);
 
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
@@ -306,7 +330,9 @@ int main(int argc, char *argv[])
         FatalError("Network type not allowed (3rd parameter)\n");
     }
 
-    detNN->init(net, n_classes, n_batch);
+//    detNN->init(net, n_classes, n_batch);
+    detNN->init(net,cfg_input,name_input,n_classes,n_batch,conf_thresh);
+
 
     gRun = true;
 

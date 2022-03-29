@@ -6,23 +6,47 @@
 #include <fstream>
 #include <iomanip>
 #include <stdlib.h>
+#include <yaml-cpp/yaml.h>
+
 
 #include "cuda.h"
 #include "cuda_runtime_api.h"
 #include <cublas_v2.h>
 #include <cudnn.h>
+#include <NvInferVersion.h>
 
 
 #ifdef __linux__
 #include <unistd.h>
-
 #endif
 
 #include <ios>
 #include <chrono>
 
 
+
+
+#if NV_TENSORRT_MAJOR > 7
+#define NOEXCEPT noexcept
+#else
+#define NOEXCEPT
+#endif
+
+
 #define dnnType float
+
+template<typename T> void writeBUF(char*& buffer, const T& val)
+{
+    *reinterpret_cast<T*>(buffer) = val;
+    buffer += sizeof(T);
+}
+
+template<typename T> T readBUF(const char*& buffer)
+{
+    T val = *reinterpret_cast<const T*>(buffer);
+    buffer += sizeof(T);
+    return val;
+}
 
 
 // Colored output
@@ -141,5 +165,20 @@ int find_int_arg(int argc, char **argv, char *arg, int def);
 float find_float_arg(int argc, char **argv, char *arg, float def);
 int find_arg(int argc, char* argv[], char *arg);
 char *find_char_arg(int argc, char **argv, char *arg, char *def);
+
+inline YAML::Node YAMLloadConf(const std::string& conf_file) {
+    std::cerr<<"Loading YAML: "<<conf_file<<"\n";
+    return YAML::LoadFile(conf_file);
+}
+
+template<typename T>
+inline T YAMLgetConf(YAML::Node conf, std::string key, T defaultVal) {
+    T val = defaultVal;
+    if(conf && conf[key]) {
+        val = conf[key].as<T>();
+    }
+    return val;
+}
+
 
 #endif //UTILS_H
