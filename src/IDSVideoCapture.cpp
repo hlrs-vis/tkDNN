@@ -39,6 +39,8 @@ void IDSVideoCapture::acquisition_thread()
     {
         TypewithMetadata<cv::Mat> newframe;
         newframe.data = IDSCam.getFrame();
+        if (m_flipped)
+            cv::flip(newframe.data, newframe.data, -1);
         newframe.time = std::chrono::system_clock::now();
         newframe.frame_id = m_frame_id;
         m_frame_id++;
