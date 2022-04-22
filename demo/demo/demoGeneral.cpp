@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
     std::string save_background_image_path = std::string("/mnt/sd-card/cameradata/images/");
     std::string cfg_input = std::string("../tests/darknet/cfg/yolo4.cfg");
     std::string name_input = std::string("../tests/darknet/names/coco.names");
+    std::string intrinsic_calibration_prefix = std::string("camera123");
     float conf_thresh = 0.3;
 
     if( configtree.count("tkdnn") == 0 )
@@ -171,6 +172,8 @@ int main(int argc, char *argv[])
                 cfg_input = configtree.get<std::string>("tkdnn.cfg_input");
             if (child.first == "conf_thresh")
                 conf_thresh = configtree.get<float>("tkdnn.conf_thresh");
+            if (child.first == "intrinsic_calibration_prefix")
+                intrinsic_calibration_prefix = configtree.get<std::string>("tkdnn.intrinsic_calibration_prefix");
 
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
@@ -582,9 +585,10 @@ if (json)
         {
             if (frames_processed % 100 == 0)
             {
-                cv::String outFileName = "test" + std::to_string(frames_processed);
+                cv::String outFileName = "3270CP-C-4mm" + std::to_string(frames_processed);
                 outFileName.append(".jpg");
                 cv::imwrite(outFileName,batch_frame[0]);
+                std::cout << "saved:" << outFileName << std::endl;
             }
 
         }
