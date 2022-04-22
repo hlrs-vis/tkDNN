@@ -102,13 +102,10 @@ int main(int argc, char *argv[])
     bool continuous_background_images = true;
     std::string save_json_path = std::string("/mnt/sd-card/cameradata/json/");
     std::string save_background_image_path = std::string("/mnt/sd-card/cameradata/images/");
-<<<<<<< HEAD
-=======
     std::string cfg_input = std::string("../tests/darknet/cfg/yolo4.cfg");
     std::string name_input = std::string("../tests/darknet/names/coco.names");
     std::string intrinsic_calibration_prefix = std::string("camera123");
     float conf_thresh = 0.3;
->>>>>>> be61053... more calibration options
 
     if( configtree.count("tkdnn") == 0 )
     {
