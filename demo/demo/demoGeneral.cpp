@@ -583,9 +583,9 @@ if (json)
 
         if (save_calibration_images)
         {
-            if (frames_processed % 100 == 0)
+            if (frames_processed % 24 == 0)
             {
-                cv::String outFileName = "3270CP-C-4mm" + std::to_string(frames_processed);
+                cv::String outFileName = intrinsic_calibration_prefix + std::to_string(frames_processed);
                 outFileName.append(".jpg");
                 cv::imwrite(outFileName,batch_frame[0]);
                 std::cout << "saved:" << outFileName << std::endl;
