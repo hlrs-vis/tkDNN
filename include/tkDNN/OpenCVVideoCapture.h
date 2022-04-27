@@ -26,6 +26,7 @@ public:
     //bool init();
     int getWidth();
     int getHeight();
+    void adjustExposure();
 
 private:
 cv::VideoCapture cap;

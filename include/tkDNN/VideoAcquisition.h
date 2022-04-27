@@ -29,6 +29,10 @@ public:
     virtual void setFrameRate(int) = 0;
     void flip();
     void setPlayback();
+    void setAdjustExposure();
+    void calculateMean(TypewithMetadata<cv::Mat> &frame);
+    virtual void adjustExposure() = 0;
+
 
 protected: 
     bool m_isOpened = false;
@@ -41,6 +45,17 @@ protected:
     int m_frames_dropped = 0;
     bool m_flipped = 0;
     bool m_playback = 0;
+    bool m_adjust_exposure = 0;
+    bool m_calculate_background_image = 0;
+    cv::Scalar m_mean;
+    int m_num_mean_values = 0;
+    int m_exposure_adjust_interval = 30;
+    int m_exposure_max_desired_mean_value = 70;
+    int m_exposure_min_desired_mean_value = 30;
+    int m_exposure = 50;
+    int m_exposure_min = 3;
+    int m_exposure_max = 2000;
+    double max_mean_value = 0;
 
 private:
 

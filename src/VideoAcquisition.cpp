@@ -65,3 +65,28 @@ void VideoAcquisition::setPlayback()
 {
     m_playback = true;
 }
+
+void VideoAcquisition::setAdjustExposure()
+{
+    m_adjust_exposure = true;
+}
+
+void VideoAcquisition::calculateMean(TypewithMetadata<cv::Mat> &frame)
+{
+    if (m_num_mean_values == 0)
+    {
+        m_mean = cv::mean(frame.data);
+        m_num_mean_values +=1;
+    }
+    else
+    {
+        m_mean += cv::mean(frame.data);
+        m_num_mean_values +=1;
+    }
+    cv::Scalar m_mean_average = m_mean/m_num_mean_values;
+    /*std::cout << "Frame mean" << m_mean_average << std::endl;
+    std::cout << "Number of Frames" << m_num_mean_values << std::endl;*/
+    double mean_array[3] = {m_mean_average[0], m_mean_average[1], m_mean_average[2] };
+    max_mean_value = *std::max_element(mean_array, mean_array+3);
+    //std::cout << "Max" << max_mean_value << std::endl;
+ }
