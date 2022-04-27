@@ -106,6 +106,7 @@ int main(int argc, char *argv[])
     std::string name_input = std::string("../tests/darknet/names/coco.names");
     std::string intrinsic_calibration_prefix = std::string("camera123");
     float conf_thresh = 0.3;
+    bool adjust_exposure = 0;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -174,6 +175,8 @@ int main(int argc, char *argv[])
                 conf_thresh = configtree.get<float>("tkdnn.conf_thresh");
             if (child.first == "intrinsic_calibration_prefix")
                 intrinsic_calibration_prefix = configtree.get<std::string>("tkdnn.intrinsic_calibration_prefix");
+            if (child.first == "adjust_exposure")
+                adjust_exposure = configtree.get<bool>("tkdnn.adjust_exposure");
 
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
@@ -394,6 +397,9 @@ if (playback){
 if (flip)
     video->flip();
 
+if (adjust_exposure)
+    video->setAdjustExposure();
+
 cv::Size image_size= cv::Size(video->getWidth(), video->getHeight());
 
 cv::Mat avgImgConverted(image_size, CV_64FC3);
@@ -533,10 +539,22 @@ if (json)
             frames_processed += 1;
         }
 
+        if (save_calibration_images)
+        {
+            if (frames_processed % 100 == 0)
+            {
+                cv::String outFileName = intrinsic_calibration_prefix + std::to_string(frames_processed);
+                outFileName.append(".jpg");
+                cv::imwrite(outFileName,batch_frame[0]);
+                std::cout << "saved:" << outFileName << std::endl;
+            }
+
+        }
+
         //inference
         detNN->update(batch_dnn_input, n_batch);
         if (draw)
-            detNN->draw(batch_frame,extyolo);
+            //detNN->draw(batch_frame,extyolo);
 
         if (show)
         {
@@ -576,21 +594,6 @@ if (json)
                 json_frames_written++;
             }
             free(send_buf);
-        }
-
-
-
-
-        if (save_calibration_images)
-        {
-            if (frames_processed % 24 == 0)
-            {
-                cv::String outFileName = intrinsic_calibration_prefix + std::to_string(frames_processed);
-                outFileName.append(".jpg");
-                cv::imwrite(outFileName,batch_frame[0]);
-                std::cout << "saved:" << outFileName << std::endl;
-            }
-
         }
     }
 

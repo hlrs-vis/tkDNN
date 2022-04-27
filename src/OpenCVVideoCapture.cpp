@@ -16,6 +16,9 @@ bool OpenCVVideoCapture::init(std::string input, int video_mode)
     {
         std::cout << "camera started\n";
         cap.set(cv::CAP_PROP_FOURCC,cv::VideoWriter::fourcc('M', 'J', 'P', 'G'));
+        cap.set(cv::CAP_PROP_AUTO_EXPOSURE, 1);
+
+        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
         switch (video_mode)
         {
             case 0:
@@ -80,6 +83,14 @@ void OpenCVVideoCapture::acquisition_thread()
         newframe.time = std::chrono::system_clock::now();
         newframe.frame_id = m_frame_id;
         m_frame_id++;
+        if (m_adjust_exposure)
+        {
+            calculateMean(newframe);
+            if (m_num_mean_values >= m_exposure_adjust_interval)
+            {
+                adjustExposure();
+            }
+        }
         m_queue.push_back(std::move(newframe));
     }
 }
@@ -105,4 +116,43 @@ void OpenCVVideoCapture::start()
 void OpenCVVideoCapture::setFrameRate(int fps)
 {
     cap.set(cv::CAP_PROP_FPS,fps);
+}
+
+
+void OpenCVVideoCapture::adjustExposure()
+{
+    if (max_mean_value > m_exposure_max_desired_mean_value)
+    {
+        m_exposure -= 1;
+        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
+    }
+    if (max_mean_value > m_exposure_min_desired_mean_value)
+    {
+        m_exposure += 1;
+        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
+    }
+}
+
+void OpenCVVideoCapture::adjustExposure()
+{
+    if (max_mean_value > m_exposure_max_desired_mean_value)
+    {
+        m_exposure -= 1;
+        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
+        if (m_exposure < m_exposure_min)
+            m_exposure = m_exposure_min;
+    }
+    else if (max_mean_value < m_exposure_min_desired_mean_value)
+    {
+        m_exposure += 1;
+        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
+        if (m_exposure > m_exposure_max)
+            m_exposure = m_exposure_max;
+    }
+    else
+    {
+        std::cout << " Nothing to do" << std::endl;
+    }
+    std::cout << "Exposure is: " << m_exposure << std::endl;
+    m_num_mean_values = 0;
 }
