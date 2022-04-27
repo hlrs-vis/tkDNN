@@ -119,19 +119,6 @@ void OpenCVVideoCapture::setFrameRate(int fps)
 }
 
 
-void OpenCVVideoCapture::adjustExposure()
-{
-    if (max_mean_value > m_exposure_max_desired_mean_value)
-    {
-        m_exposure -= 1;
-        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
-    }
-    if (max_mean_value > m_exposure_min_desired_mean_value)
-    {
-        m_exposure += 1;
-        cap.set(cv::CAP_PROP_EXPOSURE, m_exposure);
-    }
-}
 
 void OpenCVVideoCapture::adjustExposure()
 {
