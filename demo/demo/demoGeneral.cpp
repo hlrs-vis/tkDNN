@@ -586,7 +586,7 @@ if (json)
         //inference
         detNN->update(batch_dnn_input, n_batch);
         if (draw)
-            //detNN->draw(batch_frame,extyolo);
+            detNN->draw(batch_frame,extyolo);
 
         if (show)
         {
