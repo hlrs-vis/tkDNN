@@ -90,3 +90,61 @@ void VideoAcquisition::calculateMean(TypewithMetadata<cv::Mat> &frame)
     max_mean_value = *std::max_element(mean_array, mean_array+3);
     //std::cout << "Max" << max_mean_value << std::endl;
  }
+
+ void VideoAcquisition::adjustExposure()
+{
+    if (max_mean_value > m_exposure_max_desired_mean_value)
+    {
+        m_exposure -= 1;
+        if (m_exposure < m_exposure_min)
+            m_exposure = m_exposure_min;
+        setExposure(m_exposure);
+        std::cout << "Exposure changed to: " << m_exposure << std::endl;
+    }
+    else if (max_mean_value < m_exposure_min_desired_mean_value)
+    {
+        m_exposure += 1;
+        if (m_exposure > m_exposure_max)
+            m_exposure = m_exposure_max;
+        setExposure(m_exposure);
+        std::cout << "Exposure changed to: " << m_exposure << std::endl;
+    }
+    else
+    {
+        //std::cout << " Nothing to do" << std::endl;
+    }
+    m_num_mean_values = 0;
+}
+
+void VideoAcquisition::set_exposure_adjust_interval(int exposure_adjust_interval)
+{
+    m_exposure_adjust_interval = exposure_adjust_interval;
+}
+
+void VideoAcquisition::set_exposure_adjust_step(int exposure_adjust_step)
+{
+    m_exposure_adjust_step = exposure_adjust_step;
+}
+
+void VideoAcquisition::set_exposure_max_desired_mean_value (int exposure_max_desired_mean_value )
+{
+    int m_exposure_max_desired_mean_value = exposure_max_desired_mean_value;
+
+}
+
+void VideoAcquisition::set_exposure_min_desired_mean_value(int exposure_min_desired_mean_value)
+{
+    int m_exposure_min_desired_mean_value = exposure_min_desired_mean_value;
+
+}
+
+void VideoAcquisition::set_exposure_min(int exposure_min)
+{
+    int m_exposure_min = exposure_min;
+
+}
+
+void VideoAcquisition::set_exposure_max(int exposure_max)
+{
+   int m_exposure_max = exposure_max;
+}

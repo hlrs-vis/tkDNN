@@ -79,26 +79,7 @@ void IDSVideoCapture::setFrameRate(int fps)
        IDSCam.setFrameRate(fps);
 }
 
-void IDSVideoCapture::adjustExposure()
+void IDSVideoCapture::setExposure(int exposure)
 {
-    if (max_mean_value > m_exposure_max_desired_mean_value)
-    {
-        m_exposure -= 1;
-        std::cout << " Exposure adjustion not implemented for IDS" << std::endl;
-        if (m_exposure < m_exposure_min)
-            m_exposure = m_exposure_min;
-    }
-    else if (max_mean_value < m_exposure_min_desired_mean_value)
-    {
-        m_exposure += 1;
         std::cout << " Exposure adjustion not implemented for IDS " <<  std::endl;
-        if (m_exposure > m_exposure_max)
-            m_exposure = m_exposure_max;
-    }
-    else
-    {
-        std::cout << " Nothing to do" << std::endl;
-    }
-    std::cout << "Exposure is: " << m_exposure << std::endl;
-    m_num_mean_values = 0;
 }
