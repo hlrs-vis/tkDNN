@@ -31,7 +31,16 @@ public:
     void setPlayback();
     void setAdjustExposure();
     void calculateMean(TypewithMetadata<cv::Mat> &frame);
-    virtual void adjustExposure() = 0;
+    void adjustExposure();
+    virtual void setExposure(int exposure = 0) = 0;
+
+    void set_exposure_adjust_interval(int exposure_adjust_interval);
+    void set_exposure_adjust_step(int m_exposure_adjust_step);
+    void set_exposure_max_desired_mean_value (int exposure_max_desired_mean_value );
+    void set_exposure_min_desired_mean_value(int exposure_min_desired_mean_value);
+    void set_exposure_min(int exposure_min);
+    void set_exposure_max(int exposure_max);
+
 
 
 protected: 
@@ -50,6 +59,7 @@ protected:
     cv::Scalar m_mean;
     int m_num_mean_values = 0;
     int m_exposure_adjust_interval = 30;
+    int m_exposure_adjust_step = 3;
     int m_exposure_max_desired_mean_value = 70;
     int m_exposure_min_desired_mean_value = 30;
     int m_exposure = 50;

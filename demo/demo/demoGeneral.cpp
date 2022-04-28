@@ -107,6 +107,13 @@ int main(int argc, char *argv[])
     std::string intrinsic_calibration_prefix = std::string("camera123");
     float conf_thresh = 0.3;
     bool adjust_exposure = 0;
+    int exposure_adjust_interval = 30;
+    int exposure_adjust_step = 3;
+    int exposure_max_desired_mean_value = 70;
+    int exposure_min_desired_mean_value = 30;
+    int exposure = 50;
+    int exposure_min = 3;
+    int exposure_max = 2000;
 
     if( configtree.count("tkdnn") == 0 )
     {
@@ -177,8 +184,25 @@ int main(int argc, char *argv[])
                 intrinsic_calibration_prefix = configtree.get<std::string>("tkdnn.intrinsic_calibration_prefix");
             if (child.first == "adjust_exposure")
                 adjust_exposure = configtree.get<bool>("tkdnn.adjust_exposure");
+            if (child.first == "exposure_adjust_interval")
+                exposure_adjust_interval = configtree.get<int>("tkdnn.exposure_adjust_interval");
+            if (child.first == "exposure_adjust_step")
+                exposure_adjust_step = configtree.get<int>("tkdnn.exposure_adjust_step");
+            if (child.first == "exposure_max_desired_mean_value")
+                exposure_max_desired_mean_value = configtree.get<int>("tkdnn.exposure_max_desired_mean_value");
+            if (child.first == "exposure_max_desired_mean_value")
+                exposure_max_desired_mean_value = configtree.get<int>("tkdnn.exposure_max_desired_mean_value");
+            if (child.first == "exposure_min_desired_mean_value")
+                exposure_min_desired_mean_value = configtree.get<int>("tkdnn.exposure_min_desired_mean_value");
+            if (child.first == "exposure")
+                exposure = configtree.get<int>("tkdnn.exposure");
+            if (child.first == "exposure_min")
+                exposure_min = configtree.get<int>("tkdnn.exposure_min");
+            if (child.first == "exposure_max")
+                exposure_max = configtree.get<int>("tkdnn.exposure_max");
 
 
+  
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
@@ -382,7 +406,17 @@ if (flip)
     video->flip();
 
 if (adjust_exposure)
+{
     video->setAdjustExposure();
+    video->set_exposure_adjust_interval(exposure_adjust_interval);
+    video->set_exposure_adjust_step(exposure_adjust_step);
+    video->set_exposure_max_desired_mean_value(exposure_max_desired_mean_value);
+    video->set_exposure_min_desired_mean_value(exposure_min_desired_mean_value);
+    video->set_exposure_min(exposure_min);
+    video->set_exposure_max(exposure_max);
+    video->setExposure(exposure);
+}
+
 
 cv::Size image_size= cv::Size(video->getWidth(), video->getHeight());
 
