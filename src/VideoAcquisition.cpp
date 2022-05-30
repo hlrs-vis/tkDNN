@@ -95,7 +95,7 @@ void VideoAcquisition::calculateMean(TypewithMetadata<cv::Mat> &frame)
 {
     if (max_mean_value > m_exposure_max_desired_mean_value)
     {
-        m_exposure -= 1;
+        m_exposure -= m_exposure_adjust_step;
         if (m_exposure < m_exposure_min)
             m_exposure = m_exposure_min;
         setExposure(m_exposure);
@@ -103,7 +103,7 @@ void VideoAcquisition::calculateMean(TypewithMetadata<cv::Mat> &frame)
     }
     else if (max_mean_value < m_exposure_min_desired_mean_value)
     {
-        m_exposure += 1;
+        m_exposure += m_exposure_adjust_step;
         if (m_exposure > m_exposure_max)
             m_exposure = m_exposure_max;
         setExposure(m_exposure);
