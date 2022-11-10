@@ -77,6 +77,7 @@ else()
     add_definitions(-DTKDNN_PATH="${CMAKE_CURRENT_SOURCE_DIR}")
 endif()
 
+set(ENABLE_OPENCV_CUDA_CONTRIB ON)
 
 #-------------------------------------------------------------------------------
 # CUDA
