@@ -30,7 +30,8 @@
 
 bool gRun;
 bool SAVE_RESULT = false;
-
+bool black_output = false;
+bool draw_detections = false;
 using namespace boost::property_tree;
 
 void sig_handler(int signo)
@@ -146,6 +147,10 @@ int main(int argc, char *argv[])
                 show = configtree.get<int>("tkdnn.show");
             if (child.first == "save")
                 save = configtree.get<int>("tkdnn.save");
+            if (child.first == "SAVE_RESULT")
+                SAVE_RESULT = configtree.get<bool>("tkdnn.SAVE_RESULT");
+            if (child.first == "black_output")
+                black_output = configtree.get<bool>("tkdnn.black_output");
             if (child.first == "ids")
                 ids = configtree.get<int>("tkdnn.ids");
             if (child.first == "mjpeg_port")
@@ -364,7 +369,7 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-bool draw = (show || SAVE_RESULT);
+bool video_output = (show || SAVE_RESULT);
 bool write_json;
 
 std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
@@ -393,6 +398,7 @@ if (json_file.size()>0)
     jsonfilestream.open(json_file);
     jsonfilestream << "[";
 }
+
 
 if (write_json || json_port > 0)
 {
@@ -446,11 +452,15 @@ if (json)
 
     cv::VideoWriter resultVideo;
     if (SAVE_RESULT)
-    {   /*
-        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
-        */
+    {   
+        int w = video->getWidth();
+        int h = video->getHeight();
+	std::string resultVideoFile = "Videoresult";
+	resultVideoFile = resultVideoFile.append(date);
+	resultVideoFile = resultVideoFile.append(".mp4");
+        resultVideo.open(resultVideoFile, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
+
+        std::cout << "Result video initialized, saving as "  << resultVideoFile << std::endl;
     }
 
     cv::Mat frame;
@@ -481,12 +491,12 @@ if (json)
         batch_frame.clear();
         batch_images->clear();
 
-        video->getImages(batch_images, n_batch);
+       gRun = video->getImages(batch_images, n_batch);
         
         for (int bi = 0; bi < n_batch; ++bi)
         {
             // this will be used for the visualisation
-            if (draw || save_calibration_images)
+            if (video_output || save_calibration_images)
                 batch_frame.push_back((*batch_images)[bi].data);
 
             if (generate_background_image)
@@ -563,7 +573,7 @@ if (json)
                 }
             }
             // this will be resized to the net format
-            if (!draw)
+            if (!video_output)
                 //batch_dnn_input.push_back((*batch_images)[bi].data);
                 batch_dnn_input.push_back(std::move((*batch_images)[bi].data));
             else
@@ -585,8 +595,23 @@ if (json)
 
         //inference
         detNN->update(batch_dnn_input, n_batch);
-        if (draw)
-            detNN->draw(batch_frame,extyolo);
+
+
+	// Video block, images are used for inference/background calculation and will be manipulated for output/visualizationpurposes
+        if (video_output)
+	{
+            if (black_output)
+	    {
+	        for (int bi = 0; bi < n_batch; ++bi)
+                {
+                    batch_frame[bi].setTo(cv::Scalar::all(0));
+                }
+            }
+	
+	if (draw_detections)
+	{
+	    detNN->draw(batch_frame,extyolo);
+	}
 
         if (show)
         {
@@ -600,14 +625,21 @@ if (json)
         {
             break;
         }
-        if (n_batch == 1 && SAVE_RESULT)
-            resultVideo << batch_frame[0];
+        if (SAVE_RESULT)
+	{
+            for (int bi = 0; bi < n_batch; ++bi)
+            {
+                resultVideo << batch_frame[bi];
+            }
+            //resultVideo << batch_frame[0];
+	}   
 
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
         }
-        
+	}
+
         if (write_json || json_port > 0)
         {
             //send_json(batch_images, *detNN, json_port, 40000);
