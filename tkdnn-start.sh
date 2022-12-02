@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#compress existing jsons
+cd /mnt/sd-card/cameradata/json/
+if compgen -G "*.json" > /dev/null; then
+    for f in *.json;
+    do
+       echo tar -czf $f.gz $f --remove-files
+    done
+fi
+
 # Setting camera parameters
 
 v4l2-ctl -d 0 -c focus_auto=0 
