@@ -88,7 +88,7 @@ int main(int argc, char *argv[])
     std::cout << "input_ntype is " << input_ntype << "\n";
     int n_classes = 80;
     int n_batch = 1;
-    int show_video = 1;
+    int show_video = 0;
     int send_video = 0;
     int ids = 0;
     int mjpeg_port = 0;
