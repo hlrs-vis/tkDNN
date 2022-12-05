@@ -5,7 +5,7 @@ cd /mnt/sd-card/cameradata/json/
 if compgen -G "*.json" > /dev/null; then
     for f in *.json;
     do
-       echo tar -czf $f.gz $f --remove-files
+       tar -czf $f.gz $f --remove-files
     done
 fi
 
