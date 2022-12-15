@@ -571,22 +571,24 @@ if (json)
     video->stop();
     jsonfilestream << "]";
     jsonfilestream.close();
+    resultVideo.release();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
 
     std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
 
     std::cout << "detection end\n";
     double mean = 0;
-
-    std::cout << COL_GREENB << "\n\nTime stats:\n";
-    std::cout << "Min: " << *std::min_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
-    std::cout << "Max: " << *std::max_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
-    for (int i = 0; i < detNN->stats.size(); i++)
-        mean += detNN->stats[i];
-    mean /= detNN->stats.size();
-    std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
-              << COL_END;
-
+    if (inference)
+    {
+        std::cout << COL_GREENB << "\n\nTime stats:\n";
+        std::cout << "Min: " << *std::min_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
+        std::cout << "Max: " << *std::max_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
+        for (int i = 0; i < detNN->stats.size(); i++)
+            mean += detNN->stats[i];
+        mean /= detNN->stats.size();
+        std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
+                << COL_END;
+    }
     std::cout << COL_GREENB << "Frames overall: " << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
 
     return 0;
