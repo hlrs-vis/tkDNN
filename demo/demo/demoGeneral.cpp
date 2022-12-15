@@ -78,6 +78,7 @@ int main(int argc, char *argv[])
     int save_video = false;
     int black_output = false;
     int draw_detections = false;
+    int inference = true;
 
     int json_port = 0;
     std::string json_file = std::string();
@@ -152,6 +153,8 @@ int main(int argc, char *argv[])
                 draw_detections = configtree.get<int>("tkdnn.draw_detections");
             if (child.first == "black_output")
                 black_output = configtree.get<int>("tkdnn.black_output");
+            if (child.first == "inference")
+                inference = configtree.get<int>("tkdnn.inference");
             if (child.first == "ids")
                 ids = configtree.get<int>("tkdnn.ids");
             if (child.first == "mjpeg_port")
@@ -496,7 +499,8 @@ if (json)
         }
 
         //inference
-        detNN->update(batch_dnn_input, n_batch);
+        if (inference)
+            detNN->update(batch_dnn_input, n_batch);
 
 
 	// Video block, images are used for inference/background calculation and will be manipulated for output/visualizationpurposes
@@ -512,7 +516,8 @@ if (json)
 	
 	if (draw_detections)
 	{
-	    detNN->draw(batch_frame,extyolo);
+        if (inference)
+	        detNN->draw(batch_frame,extyolo);
 	}
 
         if (show_video)
