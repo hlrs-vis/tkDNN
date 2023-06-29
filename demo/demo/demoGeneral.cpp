@@ -6,6 +6,7 @@
 #include <mutex>
 #include <https_stream.h> //https_stream
 #include <JsonComposer.h>
+#include <CSVComposer.h>
 
 #include <chrono>
 #include <ctime>
@@ -39,11 +40,11 @@ void sig_handler(int signo)
 
 int main(int argc, char *argv[])
 {
-
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
     JsonComposer* json = NULL;
+    CSVComposer* csv = NULL;
 
     ptree configtree;
     char *iniconfig = find_char_arg(argc, argv, "-ini", "");
@@ -79,10 +80,12 @@ int main(int argc, char *argv[])
     int black_output = false;
     int draw_detections = false;
     int inference = true;
-
+    int csvPort = 0;
     int json_port = 0;
     std::string json_file = std::string();
     std::ofstream jsonfilestream;
+    std::string csvFileName = std::string();
+    std::ofstream csvFileStream;
     std::string net = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
@@ -132,6 +135,8 @@ int main(int argc, char *argv[])
                 json_port = configtree.get<int>("tkdnn.json_port");
             if (child.first == "json_file")
                 json_file = configtree.get<std::string>("tkdnn.json_file");
+            if (child.first == "csvFileName")
+                csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
@@ -276,6 +281,7 @@ int main(int argc, char *argv[])
 bool video_output = (show_video || save_video || send_video);
 
 bool write_json;
+bool writeCsv;
 
 std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
 std::time_t t_c = std::chrono::system_clock::to_time_t(now);
@@ -292,8 +298,7 @@ int day_recording_started = int(hours/24);
 //std::cout << "Tomorrow Days since epoch: " << int(tomorrow_hours/24) << std::endl;
 
 // std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
-if (json_file.size()>0)
-{    
+if (json_file.size()>0){    
     write_json = true;
     std::string json_extension = ".json";
     if (boost::algorithm::iends_with(json_file,json_extension))
@@ -303,11 +308,22 @@ if (json_file.size()>0)
     jsonfilestream.open(json_file);
     jsonfilestream << "[";
 }
+std::cout << csvFileName << "\n";
+if (csvFileName.size() > 0){
+    
+    writeCsv = true;
+    
+    csvFileStream.open(csvFileName);
+    
+    csv = new CSVComposer;
+}
+else writeCsv = false;
+if (writeCsv == true){
+csv->initiate(csvFileName, csvFileStream, inputvideo);
+}
 
-
-if (write_json || json_port > 0)
-{
-json = new JsonComposer;
+if (write_json || json_port > 0){
+    json = new JsonComposer;
 }
 
 VideoAcquisition *video;
@@ -315,8 +331,7 @@ VideoAcquisition *video;
 if (!ids){
     video = new OpenCVVideoCapture;
 }
-else
-{
+else{
     video = new IDSVideoCapture;
 }
 
@@ -327,11 +342,10 @@ if (playback){
     video->setPlayback();
 }
 
-if (flip)
+if (flip){
     video->flip();
-
-if (adjust_exposure)
-{
+}
+if (adjust_exposure){
     video->setAdjustExposure();
     video->set_exposure_adjust_interval(exposure_adjust_interval);
     video->set_exposure_adjust_step(exposure_adjust_step);
@@ -350,14 +364,12 @@ Mat H(image_size, CV_64FC3, 0.0);
 
 video->start();
 
-if (json)
-{
+if (json){
     json->setResolution(video->getWidth(), video->getHeight());
 }
 
     cv::VideoWriter resultVideo;
-    if (save_video)
-    {   
+    if (save_video){   
         int w = video->getWidth();
         int h = video->getHeight();
 	std::string resultVideoFile = "Videoresult";
@@ -369,8 +381,7 @@ if (json)
     }
 
     cv::Mat frame;
-    if (show_video)
-    {
+    if (show_video){
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
         cv::moveWindow("detection", 100, 100);
         cv::resizeWindow("detection", 1920, 1080);
@@ -388,8 +399,7 @@ if (json)
     int calibration_frames_taken = 0;
 
 
-    while (gRun)
-    {
+    while (gRun){
         //ensure queue holds enough pictures for batch size
 
         batch_dnn_input.clear();
@@ -398,18 +408,14 @@ if (json)
 
        gRun = video->getImages(batch_images, n_batch);
         
-        for (int bi = 0; bi < n_batch; ++bi)
-        {
+        for (int bi = 0; bi < n_batch; ++bi){
             // this will be used for the visualisation
             if (video_output || save_calibration_images)
                 batch_frame.push_back((*batch_images)[bi].data);
 
-            if (generate_background_image)
-            {
-                if (calibration_frames_taken < calibration_frames_target)
-                {
-                    if (frames_processed % calibration_frames_skip_factor == 0)
-                    {
+            if (generate_background_image){
+                if (calibration_frames_taken < calibration_frames_target){
+                    if (frames_processed % calibration_frames_skip_factor == 0){
                         cv::Mat accFrame = (*batch_images)[bi].data;
 
                         for(int i = 0; i < H.rows; i++)
@@ -428,8 +434,7 @@ if (json)
                             cv::imshow("averageConverted", avgImgConverted);
                     }
                 }
-                else if (calibration_frames_taken == calibration_frames_target)
-                {
+                else if (calibration_frames_taken == calibration_frames_target){
                     cv::String outFileName = save_background_image_path;
 		    outFileName.append("/background_image");
 		    //cv::String outFileName = "background_image";
@@ -446,28 +451,23 @@ if (json)
                     std::cout << COL_RED << "Trying to save" << outFileName << "\n" << COL_END;
 		    cv::imwrite(outFileName,avgImgConverted);
                     std::cout << "background image saved after " << frames_processed << "processed frames, " << calibration_frames_taken << " frames used." << std::endl;
-                    if (continuous_background_images)
-                    {
+                    if (continuous_background_images){
                         calibration_frames_taken = 0;
                         //H.zeros(image_size,CV_64FC3);
                         for(int i = 0; i < H.rows; i++)
-                            for(int j = 0; j < H.cols; j++)
-                                {
+                            for(int j = 0; j < H.cols; j++){
                                 H.at<Vec3d>(i,j)[0]=0.0;
                                 H.at<Vec3d>(i,j)[1]=0.0;
                                 H.at<Vec3d>(i,j)[2]=0.0;
                                 }
                     }
-                    else
-                    {
+                    else{
                         generate_background_image = false;
                     }
                 }
             }
-            else
-            {
-                if (frames_processed % 1000 == 0)
-                {
+            else{
+                if (frames_processed % 1000 == 0){
                 now = std::chrono::system_clock::now();
                 t_c = std::chrono::system_clock::to_time_t(now);
                 //check for date change, if a new day has started end program to be restarted
@@ -486,10 +486,8 @@ if (json)
             frames_processed += 1;
         }
 
-        if (save_calibration_images)
-        {
-            if (frames_processed % 100 == 0)
-            {
+        if (save_calibration_images){
+            if (frames_processed % 100 == 0){
                 cv::String outFileName = intrinsic_calibration_prefix + std::to_string(frames_processed);
                 outFileName.append(".jpg");
                 cv::imwrite(outFileName,batch_frame[0]);
@@ -566,11 +564,15 @@ if (json)
             }
             free(send_buf);
         }
+        if (writeCsv > 0) {
+            csv->detectionToCsv(batch_images, *detNN, csvFileStream);
+        }
     }
 
     video->stop();
     jsonfilestream << "]";
     jsonfilestream.close();
+    csvFileStream.close();
     resultVideo.release();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
 
