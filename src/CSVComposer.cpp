@@ -1,4 +1,5 @@
 #include "CSVComposer.h"
+#include <iostream>
 
 CSVComposer::CSVComposer(){
 
@@ -30,11 +31,12 @@ void CSVComposer::detectionToCsv(std::vector<TypewithMetadata<cv::Mat>> *batch_i
 
 void CSVComposer::initiate(const std::string &csvFileName, std::ofstream &csvFileStream, const std::string &inputVideo){
     inputVideoName = inputVideo;
-    inputVideoName = inputVideoName.erase(0,12);
+    inputVideoName = inputVideoName.substr(inputVideoName.find_last_of("/"));
     inputVideoName = inputVideoName.substr(0, inputVideoName.size()-4);
+    std::cout << inputVideoName << std::endl;
     auto timed = std::chrono::system_clock::now();
-    std::time_t currentTime = std::chrono::system_clock::to_time_t(timed);
+    //std::time_t currentTime = std::chrono::system_clock::to_time_t(timed);
     myFileName = csvFileName;
-    myFileName = myFileName.append(inputVideoName+"-"+std::ctime(&currentTime)+"-det.txt");
+    myFileName = myFileName.append(inputVideoName+"_det.txt");
     csvFileStream.open(myFileName);
 }

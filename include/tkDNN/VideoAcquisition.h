@@ -50,7 +50,8 @@ protected:
     int m_height = 0;
     SharedQueue<TypewithMetadata<cv::Mat>> m_queue;
     long long int m_frame_id = 0;
-    int m_max_number_queued = 100;
+    /// originaly m_max_number_queued = 100
+    int m_max_number_queued = 5;
     int m_frames_dropped = 0;
     bool m_flipped = 0;
     bool m_playback = 0;
