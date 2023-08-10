@@ -1,6 +1,3 @@
 [submodule "lib/ids_opencv"]
 	path = lib/ids_opencv
 	url = git@github.com:tobst/ids_opencv.git
-[submodule "deep_sort"]
-	path = deep_sort
-	url = https://github.com/nwojke/deep_sort
