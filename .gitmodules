@@ -3,4 +3,5 @@
 	url = git@github.com:tobst/ids_opencv.git
 [submodule "deep_sort"]
 	path = deep_sort
-	url = https://github.com/nwojke/deep_sort
+	#url = https://github.com/nwojke/deep_sort
+	url = https://github.com/JakobHuesken/deep_sort.git
