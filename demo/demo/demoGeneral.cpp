@@ -536,7 +536,9 @@ int main(int argc, char *argv[]){
 	    }
         if(deepsort_processing){
             //code which does the generation of detections and than sends those via kafka
-
+            //const string model_filename = "resources/networks/mars-small128.pb";
+            //auto encoder = create_box_encoder(model_filename, "images", "features", 32);
+            //generate_detections(encoder, mot_dir, output_dir, detection_dir);
         }
 
         if (write_json || json_port > 0){

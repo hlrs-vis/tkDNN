@@ -33,7 +33,7 @@ cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv
 
 ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
     session = tf.Session()
-    status = tf.s
+    status = tf
 
     input_var_ = input_name + ":0";
     output_var_ = output_name + ":0";
