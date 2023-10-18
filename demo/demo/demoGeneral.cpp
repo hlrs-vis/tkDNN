@@ -2,6 +2,7 @@
 #include <fstream>
 #include <signal.h>
 #include <stdlib.h> /* srand, rand */
+#include <cstdlib>
 #include <unistd.h>
 #include <mutex>
 #include <https_stream.h> //https_stream
@@ -26,11 +27,12 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-
+#include <boost/python.hpp>
 #include <boost/algorithm/string.hpp>
 
 bool gRun;
 using namespace boost::property_tree;
+
 
 void sig_handler(int signo)
 {
@@ -39,7 +41,19 @@ void sig_handler(int signo)
 }
 
 int main(int argc, char *argv[])
-{
+{   
+
+    setenv("PYTHONPATH", "./deep_sort", 1);
+    Py_Initialize();
+    namespace python=boost::python;
+    python::object my_python_class_module = python::import("MyTestClass");
+
+    python::object ctest = my_python_class_module.attr("Test")();
+
+    ctest.attr("awnser")("jakob");
+
+
+    
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
@@ -267,7 +281,7 @@ int main(int argc, char *argv[])
         FatalError("Network type not allowed (3rd parameter)\n");
     }
 
-//    detNN->init(net, n_classes, n_batch);
+    //    detNN->init(net, n_classes, n_batch);
     detNN->init(net,cfg_input,name_input,n_classes,n_batch,conf_thresh);
 
 
@@ -406,7 +420,7 @@ if (json){
         batch_frame.clear();
         batch_images->clear();
 
-       gRun = video->getImages(batch_images, n_batch);
+        gRun = video->getImages(batch_images, n_batch);
         
         for (int bi = 0; bi < n_batch; ++bi){
             // this will be used for the visualisation
@@ -419,12 +433,11 @@ if (json){
                         cv::Mat accFrame = (*batch_images)[bi].data;
 
                         for(int i = 0; i < H.rows; i++)
-                            for(int j = 0; j < H.cols; j++)
-                                {
+                            for(int j = 0; j < H.cols; j++){
                                 H.at<Vec3d>(i,j)[0]+=double(accFrame.at<Vec3b>(i,j)[0]);
                                 H.at<Vec3d>(i,j)[1]+=double(accFrame.at<Vec3b>(i,j)[1]);
                                 H.at<Vec3d>(i,j)[2]+=double(accFrame.at<Vec3b>(i,j)[2]);
-                                }
+                            }
 
                         calibration_frames_taken++;
                         avgImgConverted = H;
@@ -436,8 +449,8 @@ if (json){
                 }
                 else if (calibration_frames_taken == calibration_frames_target){
                     cv::String outFileName = save_background_image_path;
-		    outFileName.append("/background_image");
-		    //cv::String outFileName = "background_image";
+                    outFileName.append("/background_image");
+                    //cv::String outFileName = "background_image";
                     outFileName.append(date);
                     now = std::chrono::system_clock::now();
                     t_c = std::chrono::system_clock::to_time_t(now);
@@ -449,7 +462,7 @@ if (json){
                     std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
                     outFileName.append(".jpg");
                     std::cout << COL_RED << "Trying to save" << outFileName << "\n" << COL_END;
-		    cv::imwrite(outFileName,avgImgConverted);
+		            cv::imwrite(outFileName,avgImgConverted);
                     std::cout << "background image saved after " << frames_processed << "processed frames, " << calibration_frames_taken << " frames used." << std::endl;
                     if (continuous_background_images){
                         calibration_frames_taken = 0;
@@ -459,7 +472,7 @@ if (json){
                                 H.at<Vec3d>(i,j)[0]=0.0;
                                 H.at<Vec3d>(i,j)[1]=0.0;
                                 H.at<Vec3d>(i,j)[2]=0.0;
-                                }
+                            }
                     }
                     else{
                         generate_background_image = false;
@@ -468,11 +481,11 @@ if (json){
             }
             else{
                 if (frames_processed % 1000 == 0){
-                now = std::chrono::system_clock::now();
-                t_c = std::chrono::system_clock::to_time_t(now);
-                //check for date change, if a new day has started end program to be restarted
-                hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
-                int day_now = int(hours/24);
+                    now = std::chrono::system_clock::now();
+                    t_c = std::chrono::system_clock::to_time_t(now);
+                    //check for date change, if a new day has started end program to be restarted
+                    hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
+                    int day_now = int(hours/24);
                 if (day_now != day_recording_started)
                     gRun = false;
                 }
@@ -493,7 +506,6 @@ if (json){
                 cv::imwrite(outFileName,batch_frame[0]);
                 std::cout << "saved:" << outFileName << std::endl;
             }
-
         }
 
         //inference
@@ -501,52 +513,39 @@ if (json){
             detNN->update(batch_dnn_input, n_batch);
 
 
-	// Video block, images are used for inference/background calculation and will be manipulated for output/visualizationpurposes
-        if (video_output)
-	{
-            if (black_output)
-	    {
-	        for (int bi = 0; bi < n_batch; ++bi)
-                {
+	    // Video block, images are used for inference/background calculation and will be manipulated for output/visualizationpurposes
+        if (video_output){
+            if (black_output){
+	            for (int bi = 0; bi < n_batch; ++bi){
                     batch_frame[bi].setTo(cv::Scalar::all(0));
                 }
             }
-	
-	if (draw_detections)
-	{
-        if (inference)
-	        detNN->draw(batch_frame,extyolo);
-	}
-
-        if (show_video)
-        {
-            for (int bi = 0; bi < n_batch; ++bi)
-            {
-                cv::imshow("detection", batch_frame[bi]);
+            if (draw_detections){
+                if (inference)
+                    detNN->draw(batch_frame,extyolo);
             }
-            //cv::imshow("detection", batch_frame[0]);
-        }
-        if (cv::waitKey(1) == 27)
-        {
-            break;
-        }
-        if (save_video)
-	{
-            for (int bi = 0; bi < n_batch; ++bi)
-            {
-                resultVideo << batch_frame[bi];
+            if (show_video){
+                for (int bi = 0; bi < n_batch; ++bi)
+                {
+                    cv::imshow("detection", batch_frame[bi]);
+                }
+                //cv::imshow("detection", batch_frame[0]);
             }
-            //resultVideo << batch_frame[0];
-	}   
-
-        if (mjpeg_port > 0)
-        {
-            send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
-        }
-	}
-
-        if (write_json || json_port > 0)
-        {
+            if (cv::waitKey(1) == 27){
+                break;
+            }
+            if (save_video){
+                for (int bi = 0; bi < n_batch; ++bi)
+                {
+                    resultVideo << batch_frame[bi];
+                }
+                //resultVideo << batch_frame[0];
+            }   
+            if (mjpeg_port > 0){
+                send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
+            }
+	    }
+        if (write_json || json_port > 0){
             //send_json(batch_images, *detNN, json_port, 40000);
             char *send_buf = json->detection_to_json(batch_images, *detNN, NULL);
             if (json_port > 0)
@@ -568,7 +567,6 @@ if (json){
             csv->detectionToCsv(batch_images, *detNN, csvFileStream);
         }
     }
-
     video->stop();
     jsonfilestream << "]";
     jsonfilestream.close();
@@ -580,8 +578,7 @@ if (json){
 
     std::cout << "detection end\n";
     double mean = 0;
-    if (inference)
-    {
+    if (inference){
         std::cout << COL_GREENB << "\n\nTime stats:\n";
         std::cout << "Min: " << *std::min_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
         std::cout << "Max: " << *std::max_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
