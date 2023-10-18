@@ -1,5 +1,7 @@
 #include "GenerateDetections.h"
 
+namespace tf = tensorflow {
+
 cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape) {
     cv::Rect patched_bbox = bbox;
 
@@ -29,15 +31,44 @@ cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv
     return image_patch;
 }
 
-ImageEncoder::ImageEncoder(){
+ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
+    session = tf.Session()
+    status = tf.s
 
+    input_var_ = input_name + ":0";
+    output_var_ = output_name + ":0";
+
+    assert(session_->Run({}, {input_var_}, {}, &input_tensor_).ok());
+    assert(session_->Run({}, {output_var_}, {}, &output_tensor_).ok());
+
+    feature_dim = output_tensor_.shape().dim_size(1);
+    image_shape = cv::Size(input_tensor_.shape().dim_size(2), input_tensor_.shape().dim_size(1));
 }
 
-void ImageEncoder::initiate(){
 
 
+
+cv::Mat create_box_encoder(const std::string &model_filename, const std::string &input_name = "images",
+                           const std::string &output_name = "features", const int batch_size = 32) {
+    ImageEncoder image_encoder(model_filename, input_name, output_name);
+    cv::Size image_shape = image_encoder.getImageShape();
+
+    auto encoder = [&](const cv::Mat& image, const std::vector<cv::Rect>& boxes) {
+        std::vector<cv::Mat> image_patches;
+        for (const cv::Rect& box : boxes) {
+            cv::Mat patch = extract_image_patch(image, box, cv::Size(image_shape.width, image_shape.height));
+            if (patch.empty()) {
+                std::cout << "WARNING: Failed to extract image patch: " << box << "." << std::endl;
+                patch = cv::Mat(image_shape, CV_8UC3); 
+                cv::randu(patch, cv::Scalar(0, 0, 0), cv::Scalar(255, 255, 255));
+            }
+            image_patches.push_back(patch);
+        }
+
+        return image_encoder.encodeImagePatches(image_patches, batch_size);
+    };
+
+    return encoder;
 }
 
-Detector::Detector(){}
-
-std::function<std::vector<float>(const cv::Mat &, const std::vector<cv::Rect> &)> Detector::create_box_encoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features", int batch_size = 32)
+}

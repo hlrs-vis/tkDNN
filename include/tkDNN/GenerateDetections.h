@@ -1,13 +1,20 @@
 #ifndef GENERATE_DETECTIONS_H
 #define GENERATE_DETECTIONS_H
 
-cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape)
+#include <vector>
+#include <string>
+#include <opencv2/opencv.hpp>
+#include <tensorflow/core/public/session.h>
+#include <tensorflow/core/protobuf/meta_graph.pb.h>
+
+namespace tens
+cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape);
 
 class ImageEncoder{
 
     public:
         ImageEncoder();
-        void initiate();
+        void encode();
         
     protected:
 
@@ -16,15 +23,4 @@ class ImageEncoder{
 
 };
 
-class Detector{
-
-    public:
-        auto encoder = create_box_encoder(model_filename, "images", "features", 32);
-        generate_detections(encoder, mot_dir, output_dir, detection_dir);
-
-    protected:
-
-    private:
-        const std::string model_filename;
-
-};
+cv::Mat create_box_encoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features", const int batch_size = 32);

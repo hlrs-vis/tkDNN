@@ -16,6 +16,7 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
+//#include "GenerateDetections.h"
 
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
@@ -40,8 +41,7 @@ void sig_handler(int signo)
     gRun = false;
 }
 
-int main(int argc, char *argv[])
-{   
+int main(int argc, char *argv[]){   
 
     setenv("PYTHONPATH", "./deep_sort", 1);
     Py_Initialize();
@@ -70,23 +70,19 @@ int main(int argc, char *argv[])
     char *jsonconfig = find_char_arg(argc, argv, "-json", "");
     std::string jsonConfig(jsonconfig);
     
-    if (!iniConfig.empty() ? (!xmlConfig.empty() || !jsonConfig.empty()) : (!xmlConfig.empty() && !jsonConfig.empty()))
-    {
+    if (!iniConfig.empty() ? (!xmlConfig.empty() || !jsonConfig.empty()) : (!xmlConfig.empty() && !jsonConfig.empty())){
         std::cout << COL_RED << "ERROR: More than one config file given.\n" << COL_END;
         return 1;
     }
 	
 	// ptree configtree;
-    if (!iniConfig.empty())
-    {
+    if (!iniConfig.empty()){
         ini_parser::read_ini(iniConfig, configtree);
     }
-    else if (!xmlConfig.empty())
-    {
+    else if (!xmlConfig.empty()){
         xml_parser::read_xml(xmlConfig, configtree);
     }
-    else if (!jsonConfig.empty())
-    {
+    else if (!jsonConfig.empty()){
         json_parser::read_json(jsonConfig, configtree);
     }
     
@@ -135,14 +131,11 @@ int main(int argc, char *argv[])
     int exposure_min = 3;
     int exposure_max = 2000;
 
-    if( configtree.count("tkdnn") == 0 )
-    {
+    if( configtree.count("tkdnn") == 0 ){
     // child node is missing
     }
-    else
-    {
-        for(auto child : configtree.get_child("tkdnn"))
-        {
+    else{
+        for(auto child : configtree.get_child("tkdnn")){
             // std::cout << COL_RED << "inside configtree.\n" << COL_END;
 
             if (child.first == "json_port")
@@ -151,6 +144,8 @@ int main(int argc, char *argv[])
                 json_file = configtree.get<std::string>("tkdnn.json_file");
             if (child.first == "csvFileName")
                 csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
+            if (child.first == "deepsort_processing")
+                deepsort_processing = configtree.get<std::string>("tkdnn.deepsort_processing");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
@@ -245,13 +240,11 @@ int main(int argc, char *argv[])
     black_output = find_int_arg(argc, argv, "-black_output", black_output);
     configtree.put("tkdnn.black_output", black_output);
 
-    if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
-    {
+    if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() ){
         std::cout << COL_GREEN << "No config file given, current configuration saved to: \"testconfiguration.ini\" \n" << COL_END;
         ini_parser::write_ini("testconfiguration.ini", configtree);
     }
-    else
-    {
+    else{
         std::cout << COL_GREEN << "config file given, current configuration saved to: \"testconfiguration2.ini\" \n" << COL_END;
         ini_parser::write_ini("testconfiguration2.ini", configtree);
     }
@@ -265,8 +258,7 @@ int main(int argc, char *argv[])
 
     tk::dnn::DetectionNN *detNN;
 
-    switch (input_ntype)
-    {
+    switch (input_ntype){
     case 'y':
         detNN = &yolo;
         break;
@@ -287,108 +279,107 @@ int main(int argc, char *argv[])
 
     gRun = true;
 
-    if (mjpeg_port > 0)
-    {
+    if (mjpeg_port > 0){
 	    send_video = true;
     }
 
-bool video_output = (show_video || save_video || send_video);
-
-bool write_json;
-bool writeCsv;
-
-std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
-std::time_t t_c = std::chrono::system_clock::to_time_t(now);
-char date[100];
-std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
-auto hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
-int day_recording_started = int(hours/24);
-
-//std::cout << "Hours since epoch: " << int(hours) << std::endl;
-//std::cout << "Days since epoch: " << int(hours/24) << std::endl;
-//auto tomorrow = now + std::chrono::hours(24);
-//auto tomorrow_hours = std::chrono::duration_cast<std::chrono::hours>(tomorrow.time_since_epoch()).count();
-//std::cout << "Tomorrow Hours since epoch: " << int(tomorrow_hours) << std::endl;
-//std::cout << "Tomorrow Days since epoch: " << int(tomorrow_hours/24) << std::endl;
-
-// std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
-if (json_file.size()>0){    
-    write_json = true;
-    std::string json_extension = ".json";
-    if (boost::algorithm::iends_with(json_file,json_extension))
-        json_file = json_file.substr(0, json_file.size()-5);
-    json_file = json_file.append(date);
-    json_file = json_file.append(".json");
-    jsonfilestream.open(json_file);
-    jsonfilestream << "[";
-}
-std::cout << csvFileName << "\n";
-if (csvFileName.size() > 0){
+    bool video_output = (show_video || save_video || send_video);
     
-    writeCsv = true;
-    
-    csvFileStream.open(csvFileName);
-    
-    csv = new CSVComposer;
-}
-else writeCsv = false;
-if (writeCsv == true){
-csv->initiate(csvFileName, csvFileStream, inputvideo);
-}
+    bool write_json;
+    bool writeCsv;
 
-if (write_json || json_port > 0){
-    json = new JsonComposer;
-}
+    std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
+    std::time_t t_c = std::chrono::system_clock::to_time_t(now);
+    char date[100];
+    std::strftime(date, sizeof(date), "_%F_%H-%M-%S", std::localtime(&t_c));
+    auto hours = std::chrono::duration_cast<std::chrono::hours>(now.time_since_epoch()).count();
+    int day_recording_started = int(hours/24);
 
-VideoAcquisition *video;
+    //std::cout << "Hours since epoch: " << int(hours) << std::endl;
+    //std::cout << "Days since epoch: " << int(hours/24) << std::endl;
+    //auto tomorrow = now + std::chrono::hours(24);
+    //auto tomorrow_hours = std::chrono::duration_cast<std::chrono::hours>(tomorrow.time_since_epoch()).count();
+    //std::cout << "Tomorrow Hours since epoch: " << int(tomorrow_hours) << std::endl;
+    //std::cout << "Tomorrow Days since epoch: " << int(tomorrow_hours/24) << std::endl;
 
-if (!ids){
-    video = new OpenCVVideoCapture;
-}
-else{
-    video = new IDSVideoCapture;
-}
+    // std::cout << COL_RED << "json_file size" << json_file.size() << "\n" << COL_END;
+    if (json_file.size()>0){    
+        write_json = true;
+        std::string json_extension = ".json";
+        if (boost::algorithm::iends_with(json_file,json_extension))
+            json_file = json_file.substr(0, json_file.size()-5);
+        json_file = json_file.append(date);
+        json_file = json_file.append(".json");
+        jsonfilestream.open(json_file);
+        jsonfilestream << "[";
+    }
+    std::cout << csvFileName << "\n";
+    if (csvFileName.size() > 0){
+        
+        writeCsv = true;
+        
+        csvFileStream.open(csvFileName);
+        
+        csv = new CSVComposer;
+    }
+    else writeCsv = false;
+    if (writeCsv == true){
+    csv->initiate(csvFileName, csvFileStream, inputvideo);
+    }
 
-video->init(inputvideo, video_mode);
+    if (write_json || json_port > 0){
+        json = new JsonComposer;
+    }
 
-if (playback){
-    // Slow down image acquisition instead of removing images from queue
-    video->setPlayback();
-}
+    VideoAcquisition *video;
 
-if (flip){
-    video->flip();
-}
-if (adjust_exposure){
-    video->setAdjustExposure();
-    video->set_exposure_adjust_interval(exposure_adjust_interval);
-    video->set_exposure_adjust_step(exposure_adjust_step);
-    video->set_exposure_max_desired_mean_value(exposure_max_desired_mean_value);
-    video->set_exposure_min_desired_mean_value(exposure_min_desired_mean_value);
-    video->set_exposure_min(exposure_min);
-    video->set_exposure_max(exposure_max);
-    video->setExposure(exposure);
-}
+    if (!ids){
+        video = new OpenCVVideoCapture;
+    }
+    else{
+        video = new IDSVideoCapture;
+    }
+
+    video->init(inputvideo, video_mode);
+
+    if (playback){
+        // Slow down image acquisition instead of removing images from queue
+        video->setPlayback();
+    }
+
+    if (flip){
+        video->flip();
+    }
+    if (adjust_exposure){
+        video->setAdjustExposure();
+        video->set_exposure_adjust_interval(exposure_adjust_interval);
+        video->set_exposure_adjust_step(exposure_adjust_step);
+        video->set_exposure_max_desired_mean_value(exposure_max_desired_mean_value);
+        video->set_exposure_min_desired_mean_value(exposure_min_desired_mean_value);
+        video->set_exposure_min(exposure_min);
+        video->set_exposure_max(exposure_max);
+        video->setExposure(exposure);
+    }
 
 
-cv::Size image_size= cv::Size(video->getWidth(), video->getHeight());
+    cv::Size image_size= cv::Size(video->getWidth(), video->getHeight());
 
-cv::Mat avgImgConverted(image_size, CV_64FC3);
-Mat H(image_size, CV_64FC3, 0.0);
+    cv::Mat avgImgConverted(image_size, CV_64FC3);
+    Mat H(image_size, CV_64FC3, 0.0);
 
-video->start();
+    video->start();
 
-if (json){
-    json->setResolution(video->getWidth(), video->getHeight());
-}
+    if (json){
+        json->setResolution(video->getWidth(), video->getHeight());
+    }
 
     cv::VideoWriter resultVideo;
     if (save_video){   
         int w = video->getWidth();
         int h = video->getHeight();
-	std::string resultVideoFile = "Videoresult";
-	resultVideoFile = resultVideoFile.append(date);
-	resultVideoFile = resultVideoFile.append(".mp4");
+    std::string resultVideoFile = "Videoresult";
+    resultVideoFile = resultVideoFile.append(date);
+    resultVideoFile = resultVideoFile.append(".mp4");
         resultVideo.open(resultVideoFile, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
 
         std::cout << "Result video initialized, saving as "  << resultVideoFile << std::endl;
@@ -525,8 +516,7 @@ if (json){
                     detNN->draw(batch_frame,extyolo);
             }
             if (show_video){
-                for (int bi = 0; bi < n_batch; ++bi)
-                {
+                for (int bi = 0; bi < n_batch; ++bi){
                     cv::imshow("detection", batch_frame[bi]);
                 }
                 //cv::imshow("detection", batch_frame[0]);
@@ -535,8 +525,7 @@ if (json){
                 break;
             }
             if (save_video){
-                for (int bi = 0; bi < n_batch; ++bi)
-                {
+                for (int bi = 0; bi < n_batch; ++bi){
                     resultVideo << batch_frame[bi];
                 }
                 //resultVideo << batch_frame[0];
@@ -545,6 +534,11 @@ if (json){
                 send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
             }
 	    }
+        if(deepsort_processing){
+            //code which does the generation of detections and than sends those via kafka
+
+        }
+
         if (write_json || json_port > 0){
             //send_json(batch_images, *detNN, json_port, 40000);
             char *send_buf = json->detection_to_json(batch_images, *detNN, NULL);
