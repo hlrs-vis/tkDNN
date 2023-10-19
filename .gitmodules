@@ -4,4 +4,4 @@
 [submodule "deep_sort"]
 	path = deep_sort
 	#url = https://github.com/nwojke/deep_sort
-	url = https://github.com/JakobHuesken/deep_sort.git
+	url = git@github.com:jakobhuesken/deep_sort.git

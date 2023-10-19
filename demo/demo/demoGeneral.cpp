@@ -2,6 +2,7 @@
 #include <fstream>
 #include <signal.h>
 #include <stdlib.h> /* srand, rand */
+#include <cstdlib>
 #include <unistd.h>
 #include <mutex>
 #include <https_stream.h> //https_stream
@@ -15,6 +16,7 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
+//#include "GenerateDetections.h"
 
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
@@ -26,11 +28,12 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-
+#include <boost/python.hpp>
 #include <boost/algorithm/string.hpp>
 
 bool gRun;
 using namespace boost::property_tree;
+
 
 void sig_handler(int signo)
 {
@@ -38,8 +41,19 @@ void sig_handler(int signo)
     gRun = false;
 }
 
-int main(int argc, char *argv[])
-{
+int main(int argc, char *argv[]){   
+
+    setenv("PYTHONPATH", "./deep_sort", 1);
+    Py_Initialize();
+    namespace python=boost::python;
+    python::object my_python_class_module = python::import("MyTestClass");
+
+    python::object ctest = my_python_class_module.attr("Test")();
+
+    ctest.attr("awnser")("jakob");
+
+
+    
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
@@ -117,8 +131,7 @@ int main(int argc, char *argv[])
     int exposure_min = 3;
     int exposure_max = 2000;
 
-    if( configtree.count("tkdnn") == 0 )
-    {
+    if( configtree.count("tkdnn") == 0 ){
     // child node is missing
     }
     else{
@@ -131,6 +144,8 @@ int main(int argc, char *argv[])
                 json_file = configtree.get<std::string>("tkdnn.json_file");
             if (child.first == "csvFileName")
                 csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
+            if (child.first == "deepsort_processing")
+                deepsort_processing = configtree.get<std::string>("tkdnn.deepsort_processing");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
@@ -244,28 +259,32 @@ int main(int argc, char *argv[])
     tk::dnn::DetectionNN *detNN;
 
     switch (input_ntype){
-        case 'y':
-            detNN = &yolo;
-            break;
-        case 'c':
-            detNN = &cnet;
-            break;
-        case 'm':
-            detNN = &mbnet;
-            n_classes++;
-            break;
-        default:
-            FatalError("Network type not allowed (3rd parameter)\n");
+    case 'y':
+        detNN = &yolo;
+        break;
+    case 'c':
+        detNN = &cnet;
+        break;
+    case 'm':
+        detNN = &mbnet;
+        n_classes++;
+        break;
+    default:
+        FatalError("Network type not allowed (3rd parameter)\n");
     }
+
     //    detNN->init(net, n_classes, n_batch);
     detNN->init(net,cfg_input,name_input,n_classes,n_batch,conf_thresh);
+
+
     gRun = true;
+
     if (mjpeg_port > 0){
 	    send_video = true;
     }
 
     bool video_output = (show_video || save_video || send_video);
-
+    
     bool write_json;
     bool writeCsv;
 
@@ -296,16 +315,16 @@ int main(int argc, char *argv[])
     }
     std::cout << csvFileName << "\n";
     if (csvFileName.size() > 0){
-    
+        
         writeCsv = true;
-    
+        
         csvFileStream.open(csvFileName);
-    
+        
         csv = new CSVComposer;
     }
     else writeCsv = false;
     if (writeCsv == true){
-        csv->initiate(csvFileName, csvFileStream, inputvideo);
+    csv->initiate(csvFileName, csvFileStream, inputvideo);
     }
 
     if (write_json || json_port > 0){
@@ -358,9 +377,9 @@ int main(int argc, char *argv[])
     if (save_video){   
         int w = video->getWidth();
         int h = video->getHeight();
-	    std::string resultVideoFile = "Videoresult";
-	    resultVideoFile = resultVideoFile.append(date);
-	    resultVideoFile = resultVideoFile.append(".mp4");
+    std::string resultVideoFile = "Videoresult";
+    resultVideoFile = resultVideoFile.append(date);
+    resultVideoFile = resultVideoFile.append(".mp4");
         resultVideo.open(resultVideoFile, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
 
         std::cout << "Result video initialized, saving as "  << resultVideoFile << std::endl;
@@ -370,7 +389,7 @@ int main(int argc, char *argv[])
     if (show_video){
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
         cv::moveWindow("detection", 100, 100);
-        cv::resizeWindow("detection", 1920, 1080);    
+        cv::resizeWindow("detection", 1920, 1080);
     }
 
     std::vector<cv::Mat> batch_frame;
@@ -421,8 +440,8 @@ int main(int argc, char *argv[])
                 }
                 else if (calibration_frames_taken == calibration_frames_target){
                     cv::String outFileName = save_background_image_path;
-		            outFileName.append("/background_image");
-		            //cv::String outFileName = "background_image";
+                    outFileName.append("/background_image");
+                    //cv::String outFileName = "background_image";
                     outFileName.append(date);
                     now = std::chrono::system_clock::now();
                     t_c = std::chrono::system_clock::to_time_t(now);
@@ -444,7 +463,7 @@ int main(int argc, char *argv[])
                                 H.at<Vec3d>(i,j)[0]=0.0;
                                 H.at<Vec3d>(i,j)[1]=0.0;
                                 H.at<Vec3d>(i,j)[2]=0.0;
-                                }
+                            }
                     }
                     else{
                         generate_background_image = false;
@@ -478,7 +497,6 @@ int main(int argc, char *argv[])
                 cv::imwrite(outFileName,batch_frame[0]);
                 std::cout << "saved:" << outFileName << std::endl;
             }
-
         }
 
         //inference
@@ -493,17 +511,15 @@ int main(int argc, char *argv[])
                     batch_frame[bi].setTo(cv::Scalar::all(0));
                 }
             }
-	
-	        if (draw_detections){
+            if (draw_detections){
                 if (inference)
-	                detNN->draw(batch_frame,extyolo);
-	        }
-
+                    detNN->draw(batch_frame,extyolo);
+            }
             if (show_video){
                 for (int bi = 0; bi < n_batch; ++bi){
                     cv::imshow("detection", batch_frame[bi]);
                 }
-            //cv::imshow("detection", batch_frame[0]);
+                //cv::imshow("detection", batch_frame[0]);
             }
             if (cv::waitKey(1) == 27){
                 break;
@@ -513,22 +529,29 @@ int main(int argc, char *argv[])
                     resultVideo << batch_frame[bi];
                 }
                 //resultVideo << batch_frame[0];
-	        }   
-
+            }   
             if (mjpeg_port > 0){
                 send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
             }
 	    }
+        if(deepsort_processing){
+            //code which does the generation of detections and than sends those via kafka
+            //const string model_filename = "resources/networks/mars-small128.pb";
+            //auto encoder = create_box_encoder(model_filename, "images", "features", 32);
+            //generate_detections(encoder, mot_dir, output_dir, detection_dir);
+        }
 
-        if (write_json || json_port > 0)
-        {
+        if (write_json || json_port > 0){
             //send_json(batch_images, *detNN, json_port, 40000);
             char *send_buf = json->detection_to_json(batch_images, *detNN, NULL);
-            if (json_port > 0){
+            if (json_port > 0)
+            {
                 send_json(send_buf, json_port, 40000);
             }
-            if (!json_file.empty()){
-                if (json_frames_written != 0){
+            if (!json_file.empty())
+            {
+                if (json_frames_written != 0)
+                {
                     jsonfilestream << ",\n";
                 }
                 jsonfilestream << send_buf;
@@ -536,11 +559,10 @@ int main(int argc, char *argv[])
             }
             free(send_buf);
         }
-        if (writeCsv > 0){
+        if (writeCsv > 0) {
             csv->detectionToCsv(batch_images, *detNN, csvFileStream);
         }
     }
-
     video->stop();
     jsonfilestream << "]";
     jsonfilestream.close();
