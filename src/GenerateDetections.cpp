@@ -1,5 +1,7 @@
 #include "GenerateDetections.h"
 
+namespace std {
+namespace cv {
 namespace tf = tensorflow {
 
 cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape) {
@@ -48,8 +50,7 @@ ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::st
 
 
 
-cv::Mat create_box_encoder(const std::string &model_filename, const std::string &input_name = "images",
-                           const std::string &output_name = "features", const int batch_size = 32) {
+cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features", const int batch_size = 32) {
     ImageEncoder image_encoder(model_filename, input_name, output_name);
     cv::Size image_shape = image_encoder.getImageShape();
 
@@ -71,4 +72,22 @@ cv::Mat create_box_encoder(const std::string &model_filename, const std::string 
     return encoder;
 }
 
+cv::Mat generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::detectionNN &detNN) {
+    
+    for (int bi = 0; bi < detNN.batchDetected.size(); ++bi){        //iterate the frames in one batch
+        for (int i = 0; i < detNN.batchDetected[bi].size(); i++){   //iterate the detections in one frame
+            b = detNN.batchDetected[bi][i];                         //create 
+            vector<cv::Rect> boxes;
+            boxes.push_back(cv::Rect(static_cast<int>(b.x), static_cast<int>(b.y), static_cast<int>(b.w), static_cast<int>(b.h))); //safe the 
+            
+        }
+        vector<cv::float> features = encoder(batch_image[bi].data, std::vector boxes); //call encoder with all detections for one frame
+    }
+    
+
+    detections 
+    
 }
+
+} } }
+
