@@ -7,7 +7,8 @@
 #include <mutex>
 #include <https_stream.h> //https_stream
 #include <JsonComposer.h>
-#include <CSVComposer.h>
+#include "CSVComposer.h"
+#include "DetectionWithFeatureVector.h"
 
 #include <chrono>
 #include <ctime>
@@ -17,6 +18,7 @@
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
 //#include "GenerateDetections.h"
+//#include "KafkaProducer.h"
 
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
@@ -330,7 +332,9 @@ int main(int argc, char *argv[]){
     if (write_json || json_port > 0){
         json = new JsonComposer;
     }
-
+    if (deepsort_processing) {
+        KafkaProducer kafkaProducer("your_kafka_broker");
+    }
     VideoAcquisition *video;
 
     if (!ids){
@@ -535,10 +539,18 @@ int main(int argc, char *argv[]){
             }
 	    }
         if(deepsort_processing){
-            //code which does the generation of detections and than sends those via kafka
-            //const string model_filename = "resources/networks/mars-small128.pb";
-            //auto encoder = create_box_encoder(model_filename, "images", "features", 32);
-            //generate_detections(encoder, batch_images, *detNN);
+            // Code which does the generation of detections and than sends those via kafka
+            const string model_filename = "resources/networks/mars-small128.pb";
+            auto encoder = create_box_encoder(model_filename);
+            // Generate_detections takes the encoder model, raw images and the detNN and returns the raw detections + the feature vector in a single vector for all images in the batch
+            // The first 10 columns are in the detection MOT format and the last 128 are the feature vector
+            std::vector<DetectionWithFeatureVector> detections = generate_detections(encoder, batch_images, *detNN); 
+            //send the Message via Kafka
+            std::int partition = 0;
+            std::string topic_name = "featureDetections";
+            json message = turnDetectionToJson()    
+            kafkaProducer.produceMessage(topic_name, detections, batch_images, partition);
+
         }
 
         if (write_json || json_port > 0){

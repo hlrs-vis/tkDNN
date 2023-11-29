@@ -1,4 +1,5 @@
 #include "GenerateDetections.h"
+#include "DetectionWithFeatureVector.h"
 
 namespace std {
 namespace cv {
@@ -15,16 +16,16 @@ cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv
     }
 
     // Convert to top left, bottom right
-    patched_bbox.width += patched_bbox.x;
-    patched_bbox.height += patched_bbox.y;
+    patched_bbox.w += patched_bbox.x;
+    patched_bbox.h += patched_bbox.y;
 
     // Clip at image boundaries
     patched_bbox.x = std::max(0, patched_bbox.x);
     patched_bbox.y = std::max(0, patched_bbox.y);
-    patched_bbox.w = std::min(image.cols - 1, patched_bbox.width);
-    patched_bbox.h = std::min(image.rows - 1, patched_bbox.height);
+    patched_bbox.w = std::min(image.cols - 1, patched_bbox.w);
+    patched_bbox.h = std::min(image.rows - 1, patched_bbox.h);
 
-    if (patched_bbox.x >= patched_bbox.width || patched_bbox.y >= patched_bbox.height) {
+    if (patched_bbox.x >= patched_bbox.w || patched_bbox.y >= patched_bbox.h) {
         return cv::Mat();
     }
 
@@ -35,6 +36,8 @@ cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv
 
 ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
     session = tf.Session()
+
+    
     input_var = tf.get_default_graph().get_tensor_by_name("net/" + input_name + ":0");
     output_var = tf.get_default_graph().get_tensor_by_name("net/" + output_name + ":0");
 
@@ -44,7 +47,7 @@ ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::st
     image_shape = cv::Size(input_var.shape().dim_size(2), input_var.shape().dim_size(1));
 }
 
-ImageEncoder::call(const cv::Mat &data, int batch_size=32) {
+ImageEncoder::call(const cv::Mat &data) {
     size_t data_lenght = data.size();
     vector<vector<float>> out(data_lenght , std::vector<float>(feature_dim, 0.0f));
 }
@@ -52,7 +55,7 @@ ImageEncoder::call(const cv::Mat &data, int batch_size=32) {
 
 
 
-cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features", const int batch_size = 32) {
+cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
     ImageEncoder image_encoder;
     image_encoder.ImageEncoder(model_filename, input_name, output_name);
     cv::Size image_shape = image_encoder.image_shape;
@@ -69,26 +72,34 @@ cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &i
             image_patches.push_back(patch);
         }
 
-        return image_encoder.all(image_patches, batch_size);
+        return image_encoder.call(image_patches);
     };
 
     return encoder;
 }
 
-cv::Mat generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::detectionNN &detNN) {
+std::vector<DetectionWithFeatureVector> generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::detectionNN &detNN) { 
     
-    for (int bi = 0; bi < detNN.batchDetected.size(); ++bi){        //iterate the frames in one batch
-
-        for (int i = 0; i < detNN.batchDetected[bi].size(); i++){   //iterate the detections in one frame
-            b = detNN.batchDetected[bi][i];                         //create 
-            vector<cv::Rect> boxes;
-            boxes.push_back(cv::Rect(static_cast<int>(b.x), static_cast<int>(b.y), static_cast<int>(b.w), static_cast<int>(b.h))); //safe the x,y-coordinates, width and height
-            
+    std::vector<DetectionWithFeatureVector> detections_out;
+    for (int bi = 0; bi < detNN.batchDetected.size(); ++bi){        // Iterate the frames in one batch
+        vector<cv::Rect> boxes;
+        for (int i = 0; i < detNN.batchDetected[bi].size(); i++){   // Iterate the detections in one frame
+            tk::dnn::box b;
+            float gX = -1, gY = -1, gZ = -1;
+            b = detNN.batchDetected[bi][i];                
+            boxes.push_back(cv::Rect(static_cast<int>(b.x), static_cast<int>(b.y), static_cast<int>(b.w), static_cast<int>(b.h))); // Safe the x,y-coordinates, width and height
+            detections_out.push_back({(*batch_images)[bi].frame_id, b.cl, b.x, b.y, b.w, b.h, b.prob, gX, gV, gZ, 0}); // Safe the detections in the MOT challenge format
         }
-        vector<cv::float> features = encoder(batch_images[bi].data, std::vector boxes); //call encoder with all detections for one frame
-        detections_out
+        vector<vector<float>> features = encoder(batch_images[bi].data, std::vector boxes); // Call encoder with all detections for one frame
+        
+        // Fill the feature vector
+        for (int i = 0; i < features.size(); i++) {     
+            detections_out.feature_vector = features[i];
+        }
+        boxes.clear();
+        detections_in.clear();
     }
-    
+    return detections_out;
 }
 
 } } }

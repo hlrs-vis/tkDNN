@@ -7,11 +7,12 @@
 #include <tensorflow/core/public/session.h>
 #include <tensorflow/core/protobuf/meta_graph.pb.h>
 #include <layer.h>
+#include <nlohmann/json.hpp>
 
 namespace tf = tensorflow {
 
 
-cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape);
+cv::Mat extract_image_patch(const cv::Mat &image, const Yolo::box &bbox, const cv::Size &patch_shape);
 
 class ImageEncoder{
 
