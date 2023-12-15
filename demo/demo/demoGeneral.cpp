@@ -17,7 +17,7 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
-//#include "GenerateDetections.h"
+#include "GenerateDetections.h"
 //#include "KafkaProducer.h"
 
 #include "SharedQueue.h"
@@ -548,8 +548,8 @@ int main(int argc, char *argv[]){
             //send the Message via Kafka
             std::int partition = 0;
             std::string topic_name = "featureDetections";
-            json message = turnDetectionToJson()    
-            kafkaProducer.produceMessage(topic_name, detections, batch_images, partition);
+            json message = kafkaProducer.turnDetectionToJson(detections, batch_images);    
+            kafkaProducer.produceMessage(topic_name, message, partition);
 
         }
 

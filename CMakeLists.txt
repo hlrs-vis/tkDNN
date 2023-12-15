@@ -269,6 +269,18 @@ target_link_libraries(demoTracker tkDNN)
 add_executable(seg_demo demo/demo/seg_demo.cpp)
 target_link_libraries(seg_demo tkDNN)
 
+# KAFKA
+find_package(CppKafka REQUIRED)
+
+target_link_libraries(tkDNN CppKafka::cppkafka)
+
+# TENSORFLOW
+execute_process(COMMAND "python" "-c" "import tensorflow as tf; import sys; sys.stdout.write(tf.sysconfig.get_lib() + '/')" OUTPUT_VARIABLE TF_LIB_DIR)
+find_library(TF_LIB NAMES tensorflow_framework PATHS ${TF_LIB_DIR} NO_DEFAULT_PATH)
+
+target_link_libraries(tkDNN tensorflow_cc tensorflow_framework)
+
+
 #-------------------------------------------------------------------------------
 # Install
 #-------------------------------------------------------------------------------

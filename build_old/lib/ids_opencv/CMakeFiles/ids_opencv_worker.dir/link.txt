@@ -1,0 +1,2 @@
+/usr/bin/ar qc libids_opencv_worker.a CMakeFiles/ids_opencv_worker.dir/idscameramanager.cpp.o CMakeFiles/ids_opencv_worker.dir/acquisitionworker.cpp.o
+/usr/bin/ranlib libids_opencv_worker.a

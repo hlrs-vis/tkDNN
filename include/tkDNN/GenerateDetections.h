@@ -4,11 +4,12 @@
 #include <vector>
 #include <string>
 #include <opencv2/opencv.hpp>
-#include <tensorflow/core/public/session.h>
-#include <tensorflow/core/protobuf/meta_graph.pb.h>
+#include <tensorflow/c/c_api.h>
 #include <layer.h>
 #include <nlohmann/json.hpp>
 
+namespace std {
+namespace cv {
 namespace tf = tensorflow {
 
 
@@ -36,5 +37,5 @@ cv::Mat create_box_encoder(const std::string &model_filename, const std::string 
 
 cv::Mat generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::detectionNN &detNN);
 
-}
+} } }
 

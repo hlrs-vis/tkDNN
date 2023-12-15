@@ -10,7 +10,7 @@ KafkaProducer::~KafkaProducer() {
     producer.flush(); // Ensure any outstanding messages are delivered
 }
 
-void KafkaProducer::produceMessage(const std::string& topic, int partition) {
+void KafkaProducer::produceMessage(const std::string& topic, json message, int partition) {
     cppkafka::MessageBuilder builder(topic);
     // Construct metadata for the message, each message consists of a single frame plus all the detections on this frame
     
