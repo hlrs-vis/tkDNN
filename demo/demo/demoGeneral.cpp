@@ -18,7 +18,8 @@
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
 #include "GenerateDetections.h"
-//#include "KafkaProducer.h"
+#include "KafkaProducer.h"
+#include <tensorflow/c/c_api.h>
 
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
@@ -35,6 +36,7 @@
 
 bool gRun;
 using namespace boost::property_tree;
+using json = nlohmann::json;
 
 
 void sig_handler(int signo)

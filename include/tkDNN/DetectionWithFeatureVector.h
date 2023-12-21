@@ -2,20 +2,20 @@
 #define DETECTIONWITHFEATUREVECTOR_H
 
 #include <stdlib.h>
-#include <vector.h>
+#include <vector>
 
 struct DetectionWithFeatureVector {
     long long int frame_id;
-    std::int detections_class;
-    std::float bbox_x;
-    std::float bbox_y;
-    std::float bbox_w;
-    std::float bbox_h;
-    std::float probability; 
-    std::float global_x;
-    std::float global_y;
-    std::float gloabel_z;
-    vector<std::float> feature_vector;
+    int detection_class;
+    float bbox_x;
+    float bbox_y;
+    float bbox_w;
+    float bbox_h;
+    float probability; 
+    float global_x;
+    float global_y;
+    float global_z;
+    std::vector<float> feature_vector;
 
 };
 

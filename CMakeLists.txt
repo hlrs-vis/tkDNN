@@ -273,13 +273,21 @@ target_link_libraries(seg_demo tkDNN)
 find_package(CppKafka REQUIRED)
 
 target_link_libraries(tkDNN CppKafka::cppkafka)
-
+find_package(TensorFlow REQUIRED)
 # TENSORFLOW
-execute_process(COMMAND "python" "-c" "import tensorflow as tf; import sys; sys.stdout.write(tf.sysconfig.get_lib() + '/')" OUTPUT_VARIABLE TF_LIB_DIR)
-find_library(TF_LIB NAMES tensorflow_framework PATHS ${TF_LIB_DIR} NO_DEFAULT_PATH)
+set(TF_INCLUDE_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow/include")
+set(TF_LIB_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow")
 
-target_link_libraries(tkDNN tensorflow_cc tensorflow_framework)
 
+target_include_directories(demoGeneral PUBLIC ${TF_INCLUDE_DIR})
+target_link_libraries(demoGeneral ${TF_LIB_DIR}/libtensorflow_framework.so)
+
+
+# JSON
+set(CMAKE_PREFIX_PATH "/usr/local/src/git/json/build")
+find_package(nlohmann_json 3.2.0 REQUIRED HINTS "/usr/local/src/git/json/build")
+
+target_link_libraries(tkDNN nlohmann_json::nlohmann_json)
 
 #-------------------------------------------------------------------------------
 # Install

@@ -50,6 +50,7 @@ ImageEncoder::ImageEncoder(const std::string &checkpoint_filename, const std::st
 ImageEncoder::call(const cv::Mat &data) {
     size_t data_lenght = data.size();
     vector<vector<float>> out(data_lenght , std::vector<float>(feature_dim, 0.0f));
+    
 }
 
 

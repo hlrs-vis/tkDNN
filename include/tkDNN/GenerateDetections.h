@@ -5,7 +5,7 @@
 #include <string>
 #include <opencv2/opencv.hpp>
 #include <tensorflow/c/c_api.h>
-#include <layer.h>
+#include <Layer.h>
 #include <nlohmann/json.hpp>
 
 namespace std {
@@ -39,3 +39,4 @@ cv::Mat generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::
 
 } } }
 
+#endif 

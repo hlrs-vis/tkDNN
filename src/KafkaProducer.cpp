@@ -1,29 +1,27 @@
 #include "KafkaProducer.h"
 
-KafkaProducer::KafkaProducer(const std::string& broker_list)
-    : config{
+KafkaProducer::KafkaProducer(const std::string& broker_list) {
+    Configuration config = {
           { "metadata.broker.list", broker_list }
-      },
-      producer(config) {}
+    };  
+    
+    Producer producer(config);
+}
 
 KafkaProducer::~KafkaProducer() {
-    producer.flush(); // Ensure any outstanding messages are delivered
+    // Ensure any outstanding messages are delivered
+    producer.flush(); 
 }
 
 void KafkaProducer::produceMessage(const std::string& topic, json message, int partition) {
-    cppkafka::MessageBuilder builder(topic);
-    // Construct metadata for the message, each message consists of a single frame plus all the detections on this frame
-    
-    
-    
-    
-    builder.partition(partition).payload(jsonDetections);
+
     // Produce the message
-    producer.produce(builder);
+    producer.produce(cppkafka::MessageBuilder(topic).partition(partition).payload(message));
+    producer.flush();
 
 }
 
-json KafkaProducer::turnDetectionsToJson(const vector<DetectionWithFeatureVector>& detections, std::vector<TypewithMetadata<cv::Mat>> *batch_images){
+json KafkaProducer::turnDetectionsToJson(const std::vector<DetectionWithFeatureVector>& detections, std::vector<TypewithMetadata<cv::Mat>> *batch_images){
 
     // Create empty array to hold the detections
     json jsonDetections = json::array();
@@ -38,10 +36,10 @@ json KafkaProducer::turnDetectionsToJson(const vector<DetectionWithFeatureVector
                 for (int i = 0; i < detection.feature_vector.size(); i++) { // Save all entries of the feature vector as strings in JSON format
                     json feature = {
                         std::to_string(detection.feature_vector[i])
-                    }
-                    features.push_back(feature)
+                    };
+                    features.push_back(feature);
                 }
-                json detection = {
+                json singleDetection = {
                     { "f", std::to_string(detection.frame_id)},
                     { "c", std::to_string(detection.detection_class)},
                     { "bX", std::to_string(detection.bbox_x)},
@@ -54,8 +52,10 @@ json KafkaProducer::turnDetectionsToJson(const vector<DetectionWithFeatureVector
                     { "gZ", std::to_string(detection.global_z)},
                     { "features", features}
                 };
-            jsonDetections.push_back(detection);
+                jsonDetections.push_back(singleDetection);
+            }
         }
 
     }
+    return jsonDetections;
 }
