@@ -51,6 +51,7 @@ int main(int argc, char *argv[]){
 
     JsonComposer* json = NULL;
     CSVComposer* csv = NULL;
+    KafkaProducer* kafkaProducer = NULL;
 
     ptree configtree;
     char *iniconfig = find_char_arg(argc, argv, "-ini", "");
@@ -324,7 +325,8 @@ int main(int argc, char *argv[]){
         json = new JsonComposer;
     }
     if (deepsort_processing) {
-        KafkaProducer kafkaProducer("localhost");
+        kafkaProducer = new KafkaProducer("localhost");
+        //KafkaProducer kafkaProducer("localhost");
     }
     VideoAcquisition *video;
 
@@ -540,7 +542,7 @@ int main(int argc, char *argv[]){
             int partition = 0;
             std::string topic_name = "featureDetections";
             std::string message = "test"; //kafka_producer.turnDetectionToJson(detections, batch_images);    
-            kafka_producer.produceMessage(topic_name, message, partition);
+            kafkaProducer->produceMessage(topic_name, message, partition);
 
         }
 
