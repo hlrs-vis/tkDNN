@@ -9,19 +9,20 @@
 #include <vector>
 
 using json = nlohmann::json;
+using namespace std;
 using namespace cppkafka;
 
 class KafkaProducer {
     public:
-        KafkaProducer(const std::string& broker_list);
+        KafkaProducer(const string& broker_list);
         ~KafkaProducer();
 
-        void produceMessage(const std::string& topic, json message, int partition = 0);
-        json turnDetectionsToJson(const std::vector<DetectionWithFeatureVector>& detections, std::vector<TypewithMetadata<cv::Mat>> *batch_images);
+        void produceMessage(const string& topic, string message, int partition = 0);
+        string turnDetectionsToJson(const vector<DetectionWithFeatureVector>& detections, vector<TypewithMetadata<cv::Mat>> *batch_images);
 
     private:
-        cppkafka::Configuration config;
-        cppkafka::Producer producer;
+        Configuration config;
+        Producer producer;
 };
 
 

@@ -7,24 +7,21 @@
 #include <tensorflow/c/c_api.h>
 #include <Layer.h>
 #include <nlohmann/json.hpp>
+#include "DetectionNN.h"
+#include "TypewithMetadata.h"
 
-namespace std {
-namespace cv {
-namespace tf = tensorflow {
+using namespace std;
+using namespace cv; 
 
-
-cv::Mat extract_image_patch(const cv::Mat &image, const Yolo::box &bbox, const cv::Size &patch_shape);
+cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape);
 
 class ImageEncoder{
 
     public:
-        session;
-        tf::Tensor input_var;
-        tf::Tensor output_var;
-        feature_dim;
-        image_shape;
-        ImageEncoder(const std::string &checkpoint_filename, const std::string &input_name, const std::string &output_name);
-        call(const cv::Mat &data, int batch_size=32);
+        ImageEncoder();
+        int initialization(const std::string &checkpoint_filename, const std::string &input_name, const std::string &output_name);
+        void endingSession();
+        vector<vector<float>> call(const cv::Mat &data, int batch_size=32);
         
     protected:
 
@@ -35,8 +32,6 @@ class ImageEncoder{
 // create_box_encoder creates the function to encode detections
 cv::Mat create_box_encoder(const std::string &model_filename, const std::string &input_name, const std::string &output_name , const int batch_size);
 
-cv::Mat generateDetections(std:function encoder, cv:Mat *batch_images, tk::dnn::detectionNN &detNN);
-
-} } }
+cv::Mat generateDetections(std::function<auto(cv::Mat, vector<cv::Rect>)> encoder, std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::detectionNN &detNN);
 
 #endif 

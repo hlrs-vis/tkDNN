@@ -1,6 +1,6 @@
 #include "KafkaProducer.h"
 
-KafkaProducer::KafkaProducer(const std::string& broker_list) {
+KafkaProducer::KafkaProducer(const string& broker_list) : config{{"metadata.broker.list", broker_list}}, producer(config) {
     Configuration config = {
           { "metadata.broker.list", broker_list }
     };  
@@ -13,7 +13,7 @@ KafkaProducer::~KafkaProducer() {
     producer.flush(); 
 }
 
-void KafkaProducer::produceMessage(const std::string& topic, json message, int partition) {
+void KafkaProducer::produceMessage(const string& topic, string message, int partition) {
 
     // Produce the message
     producer.produce(cppkafka::MessageBuilder(topic).partition(partition).payload(message));
@@ -21,13 +21,13 @@ void KafkaProducer::produceMessage(const std::string& topic, json message, int p
 
 }
 
-json KafkaProducer::turnDetectionsToJson(const std::vector<DetectionWithFeatureVector>& detections, std::vector<TypewithMetadata<cv::Mat>> *batch_images){
+string KafkaProducer::turnDetectionsToJson(const vector<DetectionWithFeatureVector>& detections, vector<TypewithMetadata<cv::Mat>> *batch_images){
 
     // Create empty array to hold the detections
     json jsonDetections = json::array();
 
     // Loop over all images, create the metadata, detections 
-    for (int bi = 0; bi < batch_images.size(); ++bi){
+    for (int bi = 0; bi < batch_images->size(); ++bi){
         for (const auto& detection : detections){
             
             if (detection.frame_id == bi){  // Save only these detections, that match the frame
@@ -57,5 +57,5 @@ json KafkaProducer::turnDetectionsToJson(const std::vector<DetectionWithFeatureV
         }
 
     }
-    return jsonDetections;
+    return jsonDetections.dump();
 }

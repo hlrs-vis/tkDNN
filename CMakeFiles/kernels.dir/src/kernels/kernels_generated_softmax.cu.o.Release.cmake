@@ -61,8 +61,8 @@ set(CMAKE_COMMAND "/usr/bin/cmake") # path
 set(source_file "/usr/local/src/git/tkDNN/src/kernels/softmax.cu") # path
 set(NVCC_generated_dependency_file "/usr/local/src/git/tkDNN/CMakeFiles/kernels.dir/src/kernels/kernels_generated_softmax.cu.o.NVCC-depend") # path
 set(cmake_dependency_file "/usr/local/src/git/tkDNN/CMakeFiles/kernels.dir/src/kernels/kernels_generated_softmax.cu.o.depend") # path
-set(CUDA_make2cmake "/usr/share/cmake-3.27/Modules/FindCUDA/make2cmake.cmake") # path
-set(CUDA_parse_cubin "/usr/share/cmake-3.27/Modules/FindCUDA/parse_cubin.cmake") # path
+set(CUDA_make2cmake "/usr/share/cmake-3.28/Modules/FindCUDA/make2cmake.cmake") # path
+set(CUDA_parse_cubin "/usr/share/cmake-3.28/Modules/FindCUDA/parse_cubin.cmake") # path
 set(build_cubin OFF) # bool
 set(CUDA_HOST_COMPILER "/usr/bin/cc") # path
 # We won't actually use these variables for now, but we need to set this, in
@@ -79,7 +79,7 @@ set(CUDA_NVCC_FLAGS_DEBUG  ; )
 set(CUDA_NVCC_FLAGS_MINSIZEREL  ; )
 set(CUDA_NVCC_FLAGS_RELWITHDEBINFO  ; )
 set(nvcc_flags -m64;-Dkernels_EXPORTS) # list
-set(CUDA_NVCC_INCLUDE_DIRS [==[/usr/local/src/git/tkDNN/include;/usr/local/cuda-11.4/include;/usr/include;/usr/include/aarch64-linux-gnu;/usr/local/cuda-11.4/include;/usr/local/src/git/tkDNN/include/tkDNN;/usr/include;/usr/local/cuda-11.4/include;/usr/include/eigen3;/usr/local/src/git/tkDNN/lib/ids_opencv;/usr/local/src/git/tkDNN/ids_opencv_worker;/usr/include/ids_peak-1.3.0;/usr/include/ids_peak_ipl-1.3.1;/usr/local/src/git/tkDNN/include;/usr/local/cuda-11.4/include]==]) # list (needs to be in lua quotes to address backslashes)
+set(CUDA_NVCC_INCLUDE_DIRS [==[/usr/local/src/git/tkDNN/include;/usr/local/cuda-11.4/include;/usr/include;/usr/include/aarch64-linux-gnu;/usr/local/cuda-11.4/include;/usr/local/src/git/tkDNN/include/tkDNN;/usr/include;/usr/local/cuda-11.4/include;/usr/include/eigen3;/usr/local/src/git/tkDNN/lib/ids_opencv;/usr/local/src/git/tkDNN/ids_opencv_worker;/usr/include/ids_peak-1.3.0;/usr/include/ids_peak_ipl-1.3.1;/usr/local/src/git/tkDNN/include;/usr/local/cuda-11.4/include;/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow/include]==]) # list (needs to be in lua quotes to address backslashes)
 string(REPLACE "\\" "/" CUDA_NVCC_INCLUDE_DIRS "${CUDA_NVCC_INCLUDE_DIRS}")
 set(CUDA_NVCC_COMPILE_DEFINITIONS [==[TKDNN_PATH="/usr/local/src/git/tkDNN";OPENCV_CUDACONTRIB]==]) # list (needs to be in lua quotes see #16510 ).
 set(format_flag "-dc") # string

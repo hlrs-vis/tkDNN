@@ -1,0 +1,8 @@
+ {
+     "type": "record",
+     "name": "imgsch",
+     "fields" : [
+         {"name": "timestamp", "type": "long"},
+         {"name": "image", "type" : ""}
+     ]
+ }

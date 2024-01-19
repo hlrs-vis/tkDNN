@@ -17,9 +17,9 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
-#include "GenerateDetections.h"
+//#include "GenerateDetections.h"
 #include "KafkaProducer.h"
-#include <tensorflow/c/c_api.h>
+
 
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
@@ -31,7 +31,6 @@
 #include <boost/property_tree/ini_parser.hpp>
 #include <boost/property_tree/json_parser.hpp>
 #include <boost/property_tree/xml_parser.hpp>
-#include <boost/python.hpp>
 #include <boost/algorithm/string.hpp>
 
 bool gRun;
@@ -45,19 +44,8 @@ void sig_handler(int signo)
     gRun = false;
 }
 
-int main(int argc, char *argv[]){   
+int main(int argc, char *argv[]){  
 
-    setenv("PYTHONPATH", "./deep_sort", 1);
-    Py_Initialize();
-    namespace python=boost::python;
-    python::object my_python_class_module = python::import("MyTestClass");
-
-    python::object ctest = my_python_class_module.attr("Test")();
-
-    ctest.attr("awnser")("jakob");
-
-
-    
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
@@ -100,6 +88,7 @@ int main(int argc, char *argv[]){
     std::ofstream jsonfilestream;
     std::string csvFileName = std::string();
     std::ofstream csvFileStream;
+    bool deepsort_processing = 0;
     std::string net = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
@@ -149,7 +138,7 @@ int main(int argc, char *argv[]){
             if (child.first == "csvFileName")
                 csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
             if (child.first == "deepsort_processing")
-                deepsort_processing = configtree.get<std::string>("tkdnn.deepsort_processing");
+                deepsort_processing = configtree.get<bool>("tkdnn.deepsort_processing");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
@@ -335,7 +324,7 @@ int main(int argc, char *argv[]){
         json = new JsonComposer;
     }
     if (deepsort_processing) {
-        KafkaProducer kafkaProducer("your_kafka_broker");
+        KafkaProducer kafkaProducer("localhost");
     }
     VideoAcquisition *video;
 
@@ -542,16 +531,16 @@ int main(int argc, char *argv[]){
 	    }
         if(deepsort_processing){
             // Code which does the generation of detections and than sends those via kafka
-            const string model_filename = "resources/networks/mars-small128.pb";
-            auto encoder = create_box_encoder(model_filename);
+            //const string model_filename = "resources/networks/mars-small128.pb";
+            //auto encoder = create_box_encoder(model_filename);
             // Generate_detections takes the encoder model, raw images and the detNN and returns the raw detections + the feature vector in a single vector for all images in the batch
             // The first 10 columns are in the detection MOT format and the last 128 are the feature vector
-            std::vector<DetectionWithFeatureVector> detections = generate_detections(encoder, batch_images, *detNN); 
+            //std::vector<DetectionWithFeatureVector> detections = generate_detections(encoder, batch_images, *detNN); 
             //send the Message via Kafka
-            std::int partition = 0;
+            int partition = 0;
             std::string topic_name = "featureDetections";
-            json message = kafkaProducer.turnDetectionToJson(detections, batch_images);    
-            kafkaProducer.produceMessage(topic_name, message, partition);
+            std::string message = "test"; //kafka_producer.turnDetectionToJson(detections, batch_images);    
+            kafka_producer.produceMessage(topic_name, message, partition);
 
         }
 

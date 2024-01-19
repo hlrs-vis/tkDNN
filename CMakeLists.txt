@@ -273,14 +273,12 @@ target_link_libraries(seg_demo tkDNN)
 find_package(CppKafka REQUIRED)
 
 target_link_libraries(tkDNN CppKafka::cppkafka)
-find_package(TensorFlow REQUIRED)
+
 # TENSORFLOW
-set(TF_INCLUDE_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow/include")
-set(TF_LIB_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow")
-
-
-target_include_directories(demoGeneral PUBLIC ${TF_INCLUDE_DIR})
-target_link_libraries(demoGeneral ${TF_LIB_DIR}/libtensorflow_framework.so)
+# set(TF_INCLUDE_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow/include")
+# set(TF_LIB_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow")
+# include_directories(${TF_INCLUDE_DIR})
+# target_link_libraries(demoGeneral ${TF_LIB_DIR}/libtensorflow_framework.so)
 
 
 # JSON
