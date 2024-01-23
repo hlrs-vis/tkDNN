@@ -17,7 +17,7 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
-//#include "GenerateDetections.h"
+#include "GenerateDetections.h"
 #include "KafkaProducer.h"
 
 
