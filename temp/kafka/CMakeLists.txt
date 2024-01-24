@@ -8,7 +8,7 @@ add_executable(KafkaTest kafka-test.cpp)
 file(GLOB kafkaTest_src "src/*.cpp")
 add_library(kafkaTest_src SHARED ${kafkaTest_src})
 
-include_directories(/home/visadmin/test/kafka/include/kafkaTest)
+include_directories(/usr/local/src/git/tkDNN/temp/kafka/include/kafkaTest)
 include_directories(/usr/local/src/)
 
 find_package(OpenCV REQUIRED)

@@ -4,10 +4,12 @@
 #include <ctime>
 #include <time.h>
 #include "opencv2/opencv.hpp"
+#include <nlohmann/json.hpp>
 
 
 using namespace std;
 using namespace cppkafka;
+using json = nlohmann::json;
 
 cv::Mat readImage(const string& filename);
 
@@ -21,9 +23,12 @@ int main() {
 
     int partition = 0;
     string topic = "timed-images";
-    KafkaProducer kafka_producer("192.168.178.121:9092");
-    string message = "moo";
-    kafka_producer.produceMessage(topic, message, partition);
+    KafkaProducer kafka_producer("localhost:9092");
+    json message;
+    message["str1"] = "test";
+    message["str2"] = "message";
+    string serialized_message = message.dump();
+    kafka_producer.produceMessage(topic, serialized_message, partition);
     
     
 }

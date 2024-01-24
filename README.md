@@ -1,4 +1,28 @@
-# tkDNN
+### deepsort 
+### in this paragraph only the additional dependencies for the deepsort branch are explained #
+
+## Kafka
+
+Download Kafka:
+[Kafka](https://www.apache.org/dyn/closer.cgi?path=/kafka/3.6.1/kafka_2.13-3.6.1.tgz)
+
+Information on setting up a Kafka Environment:
+[Quickstart](https://kafka.apache.org/quickstart)
+
+[cppkafka](https://github.com/mfontanini/cppkafka) needed for C++ integration
+
+  which is build on
+  librdkafka: 
+  ```
+  $ apt install librdkafka-dev
+  ```
+  or build from source:
+  [librdkafka](https://github.com/confluentinc/librdkafka)
+
+### below is the old README for base dependencies ###
+
+
+# tkDNN 
 tkDNN is a Deep Neural Network library built with cuDNN and tensorRT primitives, specifically thought to work on NVIDIA Jetson Boards. It has been tested on TK1(branch cudnn2), TX1, TX2, AGX Xavier, Nano and several discrete GPUs.
 The main goal of this project is to exploit NVIDIA boards as much as possible to obtain the best inference performance. It does not allow training. 
 
