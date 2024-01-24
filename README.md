@@ -1,5 +1,5 @@
-### deepsort 
-### in this paragraph only the additional dependencies for the deepsort branch are explained #
+# deepsort 
+in this paragraph only the additional dependencies for the deepsort branch are explained 
 
 ## Kafka
 
@@ -19,7 +19,7 @@ Information on setting up a Kafka Environment:
   or build from source:
   [librdkafka](https://github.com/confluentinc/librdkafka)
 
-### below is the old README for base dependencies ###
+below is the old README for base dependencies
 
 
 # tkDNN 
