@@ -1,29 +1,14 @@
-from confluent_kafka import Consumer
+from kafka_consumer import KafkaDetectionConsumer
 import json
 
-c = Consumer({
-    'bootstrap.servers': 'localhost:9092',
-    'group.id': 'mygroup',
-    'auto.offset.reset': 'earliest'
-})
+broker = "localhost:9092"
+group_id = "1"
+topic = "timed-images"
 
-c.subscribe(['timed-images'])
+kafka_consumer = KafkaDetectionConsumer(broker, group_id, topic)
+
 
 while True:
-    msg = c.poll(1.0)
-
-    if msg is None:
-        continue
-    if msg.error():
-        print("Consumer error: {}".format(msg.error()))
-        continue
-    
-    try:
-        json_message = json.loads(msg.value().decode('utf-8'))
-        string1 = json_message["str1"]
-        string2 = json_message["str2"]
-        print(f"Received strings: {string1}, {string2}")
-    except json.JSONDecodeError as e:
-        print(f"Error decoding JSON: {e}")
-
-c.close()
+    frame = kafka_consumer.update()
+    if frame != 0:
+        print(f"My message = {frame}")
