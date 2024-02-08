@@ -35,65 +35,87 @@ ImageEncoder::ImageEncoder() {
 }
 
 int ImageEncoder::initialization(const std::string &checkpoint_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
-    TF_Graph* graph = TF_NewGraph();
-    TF_Status* status = TF_NewStatus();
 
-    TF_SessionOptions* session_opts = TF_NewSessionOptions();
-    TF_Buffer* buffer = TF_ReadFile("checkpoint_filename", status);
-    if (TF_GetCode(status) != TF_OK) {
-        fprintf(stderr, "Error reading file: %s\n", TF_Message(status));
+    // Read in data from file
+    std::ifstream file(checkpoint_filename, std::ios::binary | std::ios::ate);
+    if (!file.is_open()) {
+        std::cerr << "Error opening tf_graph file: " << checkpoint_filename << std::endl;
         return 1;
     }
 
-    TF_ImportGraphDefOptions* graph_opts = TF_NewImportGraphDefOptions();
-    TF_GraphImportGraphDef(graph, buffer, graph_opts, status);
-    TF_DeleteImportGraphDefOptions(graph_opts);
-    TF_DeleteBuffer(buffer);
-    if (TF_GetCode(status) != TF_OK) {
-        fprintf(stderr, "Error importing graph: %s\n", TF_Message(status));
+    std::streamsize file_size = file.tellg();
+    file.seekg(0, std::ios::beg);
+
+    std::vector<char> buffer(file_size);
+    if (!file.read(buffer.data(), file_size)) {
+        std::cerr << "Error reading tf_graph file: " << checkpoint_filename << std::endl;
         return 1;
     }
 
-    TF_Session* session = TF_NewSession(graph, session_opts, status);
+    // Create empty buffer and fill it with read in data
+    tf_buffer = TF_NewBuffer();
+    tf_buffer->data = buffer.data();
+    tf_buffer->length = buffer.size();
+   
+    // Create empty graph
+    tf_graph = TF_NewGraph();
+    status = TF_NewStatus();
+    
+    //File Graph with data from buffer
+    TF_ImportGraphDefOptions* tf_graph_opts = TF_NewImportGraphDefOptions();
+    TF_GraphImportGraphDef(tf_graph, tf_buffer, tf_graph_opts, status);
+    TF_DeleteImportGraphDefOptions(tf_graph_opts);
+    TF_DeleteBuffer(tf_buffer);
+    if (TF_GetCode(status) != TF_OK) {
+        fprintf(stderr, "Error importing tf_graph: %s\n", TF_Message(status));
+        return 1;
+    }
+
+    // Start a new TF_Session
+    session_opts = TF_NewSessionOptions();
+    session = TF_NewSession(tf_graph, session_opts, status);
     if (TF_GetCode(status) != TF_OK) {
         fprintf(stderr, "Error creating session: %s\n", TF_Message(status));
         return 1;
     }
 
-    TF_Output input_op = {TF_GraphOperationByName(graph, "net/input_name"), 0};
-    TF_Output output_op = {TF_GraphOperationByName(graph, "net/output_name"), 0};
-
-    assert(TF_OperationOutputType(input_op) == TF_FLOAT);
-    assert(TF_NumDims(TF_GraphGetTensorShape(graph, input_op, status)) == 4);
-    assert(TF_NumDims(TF_GraphGetTensorShape(graph, output_op, status)) == 2);
-
+    // Get the input and output graph 
+    input_var = {TF_GraphOperationByName(tf_graph, "net/input_name"), 0};
+    output_var = {TF_GraphOperationByName(tf_graph, "net/output_name"), 0};
+    
+    // Check the rank of the input and output graph
+    assert(TF_OperationOutputType(input_var) == TF_FLOAT);
+    assert(TF_NumDims(TF_GraphGetTensorShape(tf_graph, input_var, status)) == 4);
+    assert(TF_NumDims(TF_GraphGetTensorShape(tf_graph, output_var, status)) == 2);
+    
     // Get the output tensor shape and feature dimensions
-    int64_t* output_shape = TF_GraphGetTensorShape(graph, output_op, status)->dims;
-    int num_dims = TF_GraphGetTensorShape(graph, output_op, status)->num_dims;
-    int feature_dim = output_shape[num_dims - 1];
-
+    num_dims_out = TF_GraphGetTensorNumDims(tf_graph, output_var, status);
+    TF_GraphGetTensorShape(tf_graph, output_var, dims, num_dims_out, status);
+    int feature_dim = dims[num_dims_out - 1];
+    
     // Get the input tensor shape
-    int64_t* input_shape = TF_GraphGetTensorShape(graph, input_op, status)->dims;
+    num_dims_in = TF_GraphGetTensorNumDims(tf_graph, input_var, status);
+    TF_GraphGetTensorShape(tf_graph, input_var, image_shape, num_dims_in, status);
     
 }
 
-void deletingSession() {
+void ImageEncoder::deletingSession() {
     TF_DeleteSession(session, status);
     TF_DeleteSessionOptions(session_opts);
-    TF_DeleteGraph(graph);
+    TF_DeleteGraph(tf_graph);
     TF_DeleteStatus(status);
 }
 
-vector<vector<float>> ImageEncoder::call(const cv::Mat &data) {
-    size_t data_lenght = data.size();
-    vector<vector<float>> out(data_lenght , std::vector<float>(feature_dim, 0.0f));
+std::vector<cv::Mat> ImageEncoder::call(std::vector<cv::Mat> &data) {
+    //size_t data_lenght = data.size();
+    //vector<vector<float>> out(data_lenght , std::vector<float>(feature_dim, 0.0f));
     
 }
 
-cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
+std::function<std::vector<cv::Mat>(const cv::Mat&, const std::vector<cv::Rect>&)> createBoxEncoder(const std::string &model_filename, const std::string &input_name = "images", const std::string &output_name = "features") {
     ImageEncoder image_encoder;
     image_encoder.initialization(model_filename, input_name, output_name);
-    cv::Size image_shape = image_encoder.image_shape;
+    cv::Size image_shape(image_encoder.image_shape[0],image_encoder.image_shape[1]);
 
     auto encoder = [&](const cv::Mat& image, const vector<cv::Rect>& boxes) {
         std::vector<cv::Mat> image_patches;
@@ -113,7 +135,7 @@ cv::Mat createBoxEncoder(const std::string &model_filename, const std::string &i
     return encoder;
 }
 
-std::vector<DetectionWithFeatureVector> generateDetections(std::function<auto(cv::Mat, vector<cv::Rect>)> encoder, std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::detectionNN &detNN) { 
+std::vector<DetectionWithFeatureVector> generateDetections(std::function<auto(cv::Mat, vector<cv::Rect>)> encoder, std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN) { 
     
     std::vector<DetectionWithFeatureVector> detections_out;
     for (int bi = 0; bi < detNN.batchDetected.size(); ++bi){        // Iterate the frames in one batch
