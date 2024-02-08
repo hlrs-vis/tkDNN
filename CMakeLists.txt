@@ -166,7 +166,7 @@ endif ()
 file(GLOB tkdnn_SRC "src/*.cpp")
 set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
 add_library(tkDNN SHARED ${tkdnn_SRC})
 target_link_libraries(tkDNN ${tkdnn_LIBS} ${CUDA_CUBLAS_LIBRARIES} ids_opencv_worker)
@@ -275,11 +275,13 @@ find_package(CppKafka REQUIRED)
 target_link_libraries(tkDNN CppKafka::cppkafka)
 
 # TENSORFLOW
-set(TF_INCLUDE_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow/include")
-set(TF_LIB_DIR "/home/visadmin/.virtualenvs/opencv_cuda/lib/python3.8/site-packages/tensorflow")
+set(TF_INCLUDE_DIR "/usr/local/include")
+set(TF_LIB_DIR "/usr/local/lib")
 include_directories(${TF_INCLUDE_DIR})
-target_link_libraries(demoGeneral ${TF_LIB_DIR}/libtensorflow_framework.so)
-
+find_library(TENSORFLOW_LIB tensorflow HINTS /usr/local/lib)
+target_link_libraries(tkDNN ${TENSORFLOW_LIB})
+target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow_framework.so)
+target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow.so)
 
 # JSON
 set(CMAKE_PREFIX_PATH "/usr/local/src/git/json/build")
