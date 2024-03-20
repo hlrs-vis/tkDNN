@@ -6,15 +6,11 @@
 
 struct DetectionWithFeatureVector {
     long long int frame_id;
-    int detection_class;
-    float bbox_x;
-    float bbox_y;
-    float bbox_w;
-    float bbox_h;
-    float probability; 
-    float global_x;
-    float global_y;
-    float global_z;
+    int bbox_x;
+    int bbox_y;
+    int bbox_w;
+    int bbox_h;
+    float probability;
     std::vector<float> feature_vector;
 
 };
