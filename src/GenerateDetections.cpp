@@ -1,10 +1,8 @@
 #include "GenerateDetections.h"
-#include "DetectionWithFeatureVector.h"
 
-ImageEncoder::ImageEncoder() : tfm() {
+ImageEncoder::ImageEncoder(const std::string& checkpointFilename) : tfm(checkpointFilename) {
 
 }
-
 cv::Mat ImageEncoder::extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape) {
     cv::Rect patched_bbox = bbox;
 
@@ -33,7 +31,6 @@ cv::Mat ImageEncoder::extract_image_patch(const cv::Mat &image, const cv::Rect &
     cv::resize(image_patch, image_patch, patch_shape);
     return image_patch;
 }
-
 cv::Mat ImageEncoder::preprocessPatch(const cv::Mat& image) {
     // Resize image to match spatial dimensions (128x64)
     cv::Mat resizedImage;
@@ -48,7 +45,6 @@ cv::Mat ImageEncoder::preprocessPatch(const cv::Mat& image) {
     
     return batchedImage;
 }
-
 std::vector<std::vector<DetectionWithFeatureVector>> ImageEncoder::generateDetections(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN) { 
     
     std::vector<std::vector<DetectionWithFeatureVector>> detections_out;
@@ -71,9 +67,8 @@ std::vector<std::vector<DetectionWithFeatureVector>> ImageEncoder::generateDetec
     return detections_out;
 }
 
-
 TensorFlowManager::TensorFlowManager(const std::string& checkpointFilename = "mars-small128.pb") : checkpointFilename(checkpointFilename) {
-    if (!initializeTensorFlow(checkpointFilename)) {
+    if (!initializeTensorFlow()) {
         // If initialization fails, throw an exception
         throw std::runtime_error("Failed to initialize TensorFlow");
     }
@@ -86,7 +81,7 @@ std::vector<float> TensorFlowManager::generateFeatureVector(cv::Mat image){
     featureVector = runInference(image);
     return featureVector;
 }
-bool TensorFlowManager::initializeTensorFlow(const std::string checkpointFilename){
+bool TensorFlowManager::initializeTensorFlow(){
     printf("Hello you from TensorFlow C library version %s\n", TF_Version());
 
     // Read in data from file

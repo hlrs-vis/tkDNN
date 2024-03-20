@@ -10,7 +10,7 @@ KafkaProducer::KafkaProducer(const string& broker_list) : config{{"metadata.brok
 
 KafkaProducer::~KafkaProducer() {
     // Ensure any outstanding messages are delivered
-    producer.flush(); 
+    producer.flush(1000ms); 
 }
 
 void KafkaProducer::produceMessage(const string& topic, string message, int partition) {
@@ -26,41 +26,36 @@ void KafkaProducer::produceMessage(const string& topic, string message, int part
 
 }
 
-string KafkaProducer::turnDetectionsToJson(const vector<DetectionWithFeatureVector>& detections, vector<TypewithMetadata<cv::Mat>> *batch_images){
+std::vector<json> KafkaProducer::turnDetectionsToJson(const std::vector<std::vector<DetectionWithFeatureVector>>& batch_detections){
 
     // Create empty array to hold the detections
-    json jsonDetections = json::array();
+    std::vector<json> jsonDetections;
 
-    // Loop over all images, create the metadata, detections 
-    for (int bi = 0; bi < batch_images->size(); ++bi){
-        for (const auto& detection : detections){
-            
-            if (detection.frame_id == bi){  // Save only these detections, that match the frame
-                
-                json features = json::array();
-                for (int i = 0; i < detection.feature_vector.size(); i++) { // Save all entries of the feature vector as strings in JSON format
-                    json feature = {
-                        std::to_string(detection.feature_vector[i])
-                    };
-                    features.push_back(feature);
-                }
-                json singleDetection = {
-                    { "f", std::to_string(detection.frame_id)},
-                    { "c", std::to_string(detection.detection_class)},
-                    { "bX", std::to_string(detection.bbox_x)},
-                    { "bY", std::to_string(detection.bbox_y)},
-                    { "bW", std::to_string(detection.bbox_w)},
-                    { "bH", std::to_string(detection.bbox_h)},
-                    { "p", std::to_string(detection.probability)},
-                    { "gX", std::to_string(detection.global_x)},
-                    { "gY", std::to_string(detection.global_y)},
-                    { "gZ", std::to_string(detection.global_z)},
-                    { "features", features}
+    // Loop over all frames
+    for (int bi = 0; bi < batch_detections.size(); ++bi){
+        // Loop over all detections
+        json singleFrameDetections = json::array();
+        for (int i = 0; i < batch_detections[bi].size(); ++i){
+            json features = json::array();
+            // Loop over all entries in feature_vector
+            for (int j = 0; j < batch_detections[bi][i].feature_vector.size(); j++) { // Save all entries of the feature vector as strings in JSON format
+                json feature = {
+                    std::to_string(batch_detections[bi][i].feature_vector[j])
                 };
-                jsonDetections.push_back(singleDetection);
+                features.push_back(feature);
             }
+            json singleDetection = {
+                { "f", std::to_string(batch_detections[bi][i].frame_id)},
+                { "bX", std::to_string(batch_detections[bi][i].bbox_x)},
+                { "bY", std::to_string(batch_detections[bi][i].bbox_y)},
+                { "bW", std::to_string(batch_detections[bi][i].bbox_w)},
+                { "bH", std::to_string(batch_detections[bi][i].bbox_h)},
+                { "p", std::to_string(batch_detections[bi][i].probability)},
+                { "features", features}
+            };
+            singleFrameDetections.push_back(singleDetection);
         }
-
+        jsonDetections.push_back(singleFrameDetections);
     }
-    return jsonDetections.dump();
+    return jsonDetections;
 }

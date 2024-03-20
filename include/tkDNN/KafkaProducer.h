@@ -18,7 +18,7 @@ class KafkaProducer {
         ~KafkaProducer();
 
         void produceMessage(const string& topic, string message, int partition = 0);
-        string turnDetectionsToJson(const vector<DetectionWithFeatureVector>& detections, vector<TypewithMetadata<cv::Mat>> *batch_images);
+        vector<json> turnDetectionsToJson(const vector<vector<DetectionWithFeatureVector>>& detections);
 
     private:
         Configuration config;

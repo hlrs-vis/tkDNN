@@ -13,27 +13,15 @@
 #include "TypewithMetadata.h"
 #include <stdio.h>
 #include <cassert>
+#include "DetectionWithFeatureVector.h"
 
 using namespace std;
 using namespace cv; 
 
-
-class ImageEncoder{
-
-    public:
-        ImageEncoder();
-        std::vector<std::vector<DetectionWithFeatureVector>> generateDetections(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN);
-    protected:
-    private:
-        TensorFlowManager tfm;
-        cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape);
-        cv::Mat preprocessPatch(const cv::Mat& image);
-};
-
 class TensorFlowManager{
 
     public:
-        TensorFlowManager(const std::string& checkpointFilename = "mars-small128.pb");
+        TensorFlowManager(const std::string& checkpointFilename);
         ~TensorFlowManager();
         std::vector<float> generateFeatureVector(cv::Mat image);
     protected:
@@ -52,7 +40,7 @@ class TensorFlowManager{
         int num_dims_out;
         int64_t* output_dims;
         int64_t* input_dims;
-        bool initializeTensorFlow(const std::string checkpointFilename);
+        bool initializeTensorFlow();
         void deleteSession();
         std::vector<float> runInference(const cv::Mat imagePatch);
         TF_Tensor* createTensorFromMat(const cv::Mat& image);
@@ -61,3 +49,17 @@ class TensorFlowManager{
 };
 
 #endif 
+
+class ImageEncoder{
+
+    public:
+        std::string checkpointFilename = "mars-small128.pb";
+        ImageEncoder(const std::string& checkpointFilename);
+        std::vector<std::vector<DetectionWithFeatureVector>> generateDetections(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN);
+    protected:
+    private:
+        TensorFlowManager tfm;
+        cv::Mat extract_image_patch(const cv::Mat &image, const cv::Rect &bbox, const cv::Size &patch_shape);
+        cv::Mat preprocessPatch(const cv::Mat& image);
+};
+
