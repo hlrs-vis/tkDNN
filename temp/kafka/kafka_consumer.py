@@ -26,17 +26,33 @@ class KafkaConsumerWrapper:
 
         print("Received JSON data:", json_data)
 
+        return json_data
+
 class KafkaDetectionConsumer(KafkaConsumerWrapper):
     def process_message(self, json_data):
-        # The detections are not yet in a format supported by deepsort
-        detections = []
+        # The detections are not yet in a format supported by deep_sort
+        # This function returns them to the right data types and format
 
-        for value in json_data["detections"]:
-            value["frame_id"] = json_data["frame_id"]
-            value["timestamp"] = json_data["timestamp"]
-            value["cam_id"] = json_data["cam_id"]
-            detections.append(value)
-        return detections
+        for key, value in json_data.items():
+            if isinstance(value, str):
+                # Convert string representation of integer to integer
+                if value.isdigit():
+                    json_data[key] = int(value)
+            elif isinstance(value, list):
+                # Iterate over each dictionary in the list
+                for item in value:
+                    # Convert values to integers, except for 'probability' key
+                    for k, v in item.items():
+                        if isinstance(v, str):
+                            if v.isdigit():
+                                item[k] = int(v)
+                            elif k == 'probability':
+                                item[k] = float(v)
+                        elif isinstance(v, list):
+                            item[k] = [int(x) if isinstance(x, str) and x.isdigit() else x for x in v]
+
+        # print(json_data)
+        return json_data
     
 class KafkaCalibrationConsumer(KafkaConsumerWrapper):
     def process_message(self, json_data):

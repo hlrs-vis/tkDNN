@@ -5,7 +5,6 @@ KafkaProducer::KafkaProducer(const string& broker_list) : config{{"metadata.brok
           { "metadata.broker.list", broker_list }
     };  
     
-    Producer producer(config);
 }
 
 KafkaProducer::~KafkaProducer() {
@@ -22,6 +21,4 @@ void KafkaProducer::produceMessage(const string& topic, const string& message, c
     } catch (const cppkafka::HandleException& e) {
         std::cerr << "Error:" << e.what() << std::endl;
     }
-    
-
 }

@@ -249,8 +249,7 @@ private:
             }
             // Ensure outputData is not nullptr
             if (outputData == nullptr) {
-                std::cerr << "Error: Output tensor data is null." << std::endl;
-                // Handle the error accordingly
+                std::cerr << "Error: Output tensor data is null." << std::endl;               
             } 
             else {
                 // Extract feature vectors
@@ -280,21 +279,19 @@ private:
             // Handle error
             std::cerr << "Error performing inference: " << TF_Message(status) << std::endl;
         }
-        // Clean up input tensor
         TF_DeleteTensor(inputTensor);
     }
     cv::Mat preprocessImage(const cv::Mat& image) {
         // Resize image to match spatial dimensions (128x64)
         cv::Mat resizedImage;
         cv::resize(image, resizedImage, cv::Size(128, 64));
-
-        // Convert image to float32 and normalize pixel values
-        cv::Mat floatImage;
-        resizedImage.convertTo(floatImage, CV_32FC3, 1.0 / 255.0); // Assuming pixel range [0, 255]
+        // Convert the image to uint8 data type
+        cv::Mat uint8Image;
+        resizedImage.convertTo(uint8Image, CV_8UC3, 1.0/ 255.0); // Convert to unsigned 8-bit integers
 
         // Expand dimensions to include batch dimension (-1)
         cv::Mat batchedImage;
-        cv::merge(std::vector<cv::Mat>{floatImage}, batchedImage); // Add batch dimension
+        cv::merge(std::vector<cv::Mat>{uint8Image}, batchedImage); // Add batch dimension
         
         return batchedImage;
     }
@@ -303,18 +300,15 @@ private:
         if (image.empty()) {
             return nullptr;
         }
-        // Convert the image to uint8 data type
-        cv::Mat uint8Image;
-        image.convertTo(uint8Image, CV_8UC3); // Convert to unsigned 8-bit integers
 
         // Define the dimensions of the tensor
-        std::vector<int64_t> dims = {1, uint8Image.cols, uint8Image.rows, uint8Image.channels()};
+        std::vector<int64_t> dims = {1, image.cols, image.rows, image.channels()};
 
         // Calculate the total size of the data buffer
-        size_t len = uint8Image.total() * uint8Image.elemSize();
+        size_t len = image.total() * image.elemSize();
 
         // Create a new tensor with the given dimensions and uint8 data type
-        TF_Tensor* tensor = TF_NewTensor(TF_UINT8, dims.data(), static_cast<int>(dims.size()), uint8Image.data, len, [](void* data, size_t len, void* arg) {
+        TF_Tensor* tensor = TF_NewTensor(TF_UINT8, dims.data(), static_cast<int>(dims.size()), image.data, len, [](void* data, size_t len, void* arg) {
             // No need to deallocate memory here since we're using the original image data
         }, nullptr);
         if (tensor == nullptr) {
