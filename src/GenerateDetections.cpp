@@ -9,63 +9,59 @@ cv::Mat ImageEncoder::extract_image_patch(const cv::Mat &image, const cv::Rect &
     if (patch_shape.width > 0 && patch_shape.height > 0) {
         double target_aspect = static_cast<double>(patch_shape.width) / patch_shape.height;
         double new_width = target_aspect * patched_bbox.height;
-        patched_bbox.x -= (new_width - patched_bbox.width) / 2;
-        patched_bbox.width = new_width;
+        patched_bbox.x -= static_cast<int>((new_width - patched_bbox.width) / 2);
+        patched_bbox.width = static_cast<int>(new_width);
     }
 
-    // Convert to top left, bottom right
-    patched_bbox.width += patched_bbox.x;
-    patched_bbox.height += patched_bbox.y;
+    // Ensure bbox coordinates are within image bounds
+    patched_bbox.x = std::max(0, std::min(patched_bbox.x, image.cols - 1));
+    patched_bbox.y = std::max(0, std::min(patched_bbox.y, image.rows - 1));
 
-    // Clip at image boundaries
-    patched_bbox.x = std::max(0, patched_bbox.x);
-    patched_bbox.y = std::max(0, patched_bbox.y);
-    patched_bbox.width = std::min(image.cols - 1, patched_bbox.width);
-    patched_bbox.height = std::min(image.rows - 1, patched_bbox.height);
+    // Ensure bbox is within image dimensions
+    patched_bbox.width = std::min(patched_bbox.width, image.cols - patched_bbox.x);
+    patched_bbox.height = std::min(patched_bbox.height, image.rows - patched_bbox.y);
 
-    if (patched_bbox.x >= patched_bbox.width || patched_bbox.y >= patched_bbox.height) {
-        return cv::Mat();
+    // Check if patched_bbox is valid
+    if (patched_bbox.width <= 0 || patched_bbox.height <= 0) {
+        return cv::Mat(); // Return an empty Mat if the adjusted bbox is invalid
     }
 
+    // Extract the image patch
     cv::Mat image_patch = image(patched_bbox);
+
+    // Resize the image patch to match patch_shape
     cv::resize(image_patch, image_patch, patch_shape);
+
     return image_patch;
 }
 cv::Mat ImageEncoder::preprocessPatch(const cv::Mat& image) {
     // Resize image to match spatial dimensions (128x64)
     cv::Mat resizedImage;
     cv::resize(image, resizedImage, cv::Size(128, 64));
-    // Convert the image to uint8 data type
-    cv::Mat uint8Image;
-    resizedImage.convertTo(uint8Image, CV_8UC3, 1.0/ 255.0); // Convert to unsigned 8-bit integers
 
-    // Expand dimensions to include batch dimension (-1)
-    cv::Mat batchedImage;
-    cv::merge(std::vector<cv::Mat>{uint8Image}, batchedImage); // Add batch dimension
-    
-    return batchedImage;
+    return resizedImage;
 }
 std::vector<std::vector<DetectionWithFeatureVector>> ImageEncoder::generateDetections(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN) { 
-    
-    std::vector<std::vector<DetectionWithFeatureVector>> detections_out;
+    std::vector<std::vector<DetectionWithFeatureVector>> detections_out(detNN.batchDetected.size()); // Initialize with appropriate size
+
     for (int bi = 0; bi < detNN.batchDetected.size(); ++bi){        // Iterate the frames in one batch
-        vector<cv::Rect> boxes;
+        std::vector<cv::Rect> boxes;
+
         for (int i = 0; i < detNN.batchDetected[bi].size(); i++){   // Iterate the detections in one frame
-            tk::dnn::box b;
-            b = detNN.batchDetected[bi][i];  
+            tk::dnn::box b = detNN.batchDetected[bi][i];  
             cv::Rect box(static_cast<int>(b.x), static_cast<int>(b.y), static_cast<int>(b.w), static_cast<int>(b.h));             
-            boxes.push_back(box); // Safe the x,y-coordinates, width and height
+            boxes.push_back(box); // Save the x,y-coordinates, width and height
+
             cv::Mat patch = extract_image_patch((*batch_images)[bi].data, box, cv::Size(static_cast<int>(b.w), static_cast<int>(b.h)));
-            cv::Mat preprossedPatch = preprocessPatch(patch);
-            std::vector<float> featureVector = tfm.generateFeatureVector(preprossedPatch);
-            detections_out[bi].push_back({(*batch_images)[bi].frame_id, b.x, b.y, b.w, b.h, b.prob, featureVector}); // Safe the detections in the MOT challenge format
+            cv::Mat preprocessedPatch = preprocessPatch(patch);
+            std::vector<float> featureVector = tfm.generateFeatureVector(preprocessedPatch);
 
+            detections_out[bi].push_back({std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(((*batch_images)[bi].time).time_since_epoch()).count()),(*batch_images)[bi].frame_id, b.x, b.y, b.w, b.h, b.prob, featureVector}); 
         }
-        
     }
-
     return detections_out;
 }
+
 
 TensorFlowManager::TensorFlowManager(const std::string& checkpointFilename = "mars-small128.pb") : checkpointFilename(checkpointFilename) {
     if (!initializeTensorFlow()) {
@@ -82,7 +78,7 @@ std::vector<float> TensorFlowManager::generateFeatureVector(cv::Mat image){
     return featureVector;
 }
 bool TensorFlowManager::initializeTensorFlow(){
-    printf("Hello you from TensorFlow C library version %s\n", TF_Version());
+    printf("Hello from TensorFlow C library version %s\n", TF_Version());
 
     // Read in data from file
     std::ifstream file(checkpointFilename, std::ios::binary | std::ios::ate);
@@ -261,10 +257,8 @@ void TensorFlowManager::deleteSession(){
     TF_DeleteStatus(status);
 }
 std::vector<float> TensorFlowManager::runInference(const cv::Mat imagePatch) {
-    std::cout << "Test" << std::endl;
     TF_Tensor* inputTensor = createTensorFromMat(imagePatch);
     TF_Tensor* inputTensorPtr = inputTensor;
-    std::cout << "Test" << std::endl;
     TF_Tensor* outputTensor = createOutputTensor();
     TF_Tensor* outputTensorPtr = outputTensor;
     // Run inference
@@ -281,7 +275,6 @@ std::vector<float> TensorFlowManager::runInference(const cv::Mat imagePatch) {
                     nullptr,          // TF_Buffer*,    run metadata (nullptr for default options)
                     status            // TF_Status*,    status
     );
-    std::cout << "Test" << std::endl;
     std::vector<std::vector<float>> featureVectors;
     if (TF_GetCode(status) == TF_OK && outputTensor != nullptr) {
         // Access the data pointer of the output tensor
@@ -325,7 +318,6 @@ std::vector<float> TensorFlowManager::runInference(const cv::Mat imagePatch) {
         std::cerr << "Error performing inference: " << TF_Message(status) << std::endl;
     }
     TF_DeleteTensor(inputTensor);
-
     return featureVectors[0];
 }
 TF_Tensor* TensorFlowManager::createTensorFromMat(const cv::Mat& image) {

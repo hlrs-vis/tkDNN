@@ -24,7 +24,6 @@
 #include "SharedQueue.h"
 #include "TypewithMetadata.h"
 #include "OpenCVVideoCapture.h"
-#include "IDSVideoCapture.h"
 
 
 #include <boost/property_tree/ptree.hpp>
@@ -49,9 +48,10 @@ int main(int argc, char *argv[]){
     std::cout << "detection\n";
     signal(SIGINT, sig_handler);
 
-    JsonComposer* json = NULL;
+    JsonComposer* jsonC = NULL;
     CSVComposer* csv = NULL;
     KafkaProducer* kafkaProducer = NULL;
+    ImageEncoder* encoder = NULL;
 
     ptree configtree;
     char *iniconfig = find_char_arg(argc, argv, "-ini", "");
@@ -89,7 +89,10 @@ int main(int argc, char *argv[]){
     std::ofstream jsonfilestream;
     std::string csvFileName = std::string();
     std::ofstream csvFileStream;
-    bool deepsort_processing = 0;
+    bool deepsort_processing = false;
+    bool kafka = false;
+    bool tensorflow = false;
+    int cam_id = 1;
     std::string net = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
@@ -140,6 +143,12 @@ int main(int argc, char *argv[]){
                 csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
             if (child.first == "deepsort_processing")
                 deepsort_processing = configtree.get<bool>("tkdnn.deepsort_processing");
+            if (child.first == "kafka")
+                kafka = configtree.get<bool>("tkdnn.kafka");
+            if (child.first == "tensorflow")
+                tensorflow = configtree.get<bool>("tkdnn.tensorflow");
+            if (child.first == "cam_id")
+                cam_id = configtree.get<bool>("tkdnn.cam_id");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
@@ -322,20 +331,27 @@ int main(int argc, char *argv[]){
     }
 
     if (write_json || json_port > 0){
-        json = new JsonComposer;
+        jsonC = new JsonComposer;
     }
     if (deepsort_processing) {
-        kafkaProducer = new KafkaProducer("localhost");
-        //KafkaProducer kafkaProducer("localhost");
+        if (kafka){
+            kafkaProducer = new KafkaProducer("localhost:9092");
+        }
+        if (tensorflow) {
+            std::string checkpointFilename ="../deep_sort/resources/mars-small128.pb";
+            encoder = new ImageEncoder(checkpointFilename);
+        }
     }
+    
+
     VideoAcquisition *video;
 
     if (!ids){
         video = new OpenCVVideoCapture;
     }
-    else{
-        video = new IDSVideoCapture;
-    }
+    // else{
+    //     video = new IDSVideoCapture;
+    // }
 
     video->init(inputvideo, video_mode);
 
@@ -366,8 +382,8 @@ int main(int argc, char *argv[]){
 
     video->start();
 
-    if (json){
-        json->setResolution(video->getWidth(), video->getHeight());
+    if (jsonC){
+        jsonC->setResolution(video->getWidth(), video->getHeight());
     }
 
     cv::VideoWriter resultVideo;
@@ -532,23 +548,32 @@ int main(int argc, char *argv[]){
             }
 	    }
         if(deepsort_processing){
-            // Code which does the generation of detections and than sends those via kafka
-            //const string model_filename = "resources/networks/mars-small128.pb";
-            //auto encoder = create_box_encoder(model_filename);
-            // Generate_detections takes the encoder model, raw images and the detNN and returns the raw detections + the feature vector in a single vector for all images in the batch
-            // The first 10 columns are in the detection MOT format and the last 128 are the feature vector
-            //std::vector<DetectionWithFeatureVector> detections = generate_detections(encoder, batch_images, *detNN); 
-            //send the Message via Kafka
-            int partition = 0;
-            std::string topic_name = "featureDetections";
-            std::string message = "test"; //kafka_producer.turnDetectionToJson(detections, batch_images);    
-            kafkaProducer->produceMessage(topic_name, message, partition);
-
+            // Code which does the generation of detections and then sends those via kafka
+            std::vector<std::vector<DetectionWithFeatureVector>> detections;
+            if(tensorflow) {
+                detections = encoder->generateDetections(batch_images, *detNN); 
+            }
+            if(tensorflow && kafka) {
+                //send the Detections via Kafka
+                int partition = 0;
+                std::string topic_name = "timed-images";
+                vector<json> jsonDetections = kafkaProducer->turnDetectionsToJson(detections, cam_id);    
+                for (int i = 0; i < jsonDetections.size(); ++i) {
+                    string message = jsonDetections[i].dump();
+                    kafkaProducer->produceMessage(topic_name, message, partition);
+                }
+            }
+            if(!tensorflow && kafka) {
+                //if no detections where created just send a test message
+                int partition = 0;
+                std::string topic_name = "timed-images";
+                kafkaProducer->produceMessage(topic_name, "test", partition);
+            }
         }
 
         if (write_json || json_port > 0){
             //send_json(batch_images, *detNN, json_port, 40000);
-            char *send_buf = json->detection_to_json(batch_images, *detNN, NULL);
+            char *send_buf = jsonC->detection_to_json(batch_images, *detNN, NULL);
             if (json_port > 0)
             {
                 send_json(send_buf, json_port, 40000);
@@ -574,7 +599,14 @@ int main(int argc, char *argv[]){
     csvFileStream.close();
     resultVideo.release();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
-
+    if (deepsort_processing) {
+        if(tensorflow){
+            delete encoder;
+        }
+        if(kafka) {
+            delete kafkaProducer;
+        }
+    }
     std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
 
     std::cout << "detection end\n";

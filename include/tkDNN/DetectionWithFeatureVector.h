@@ -5,6 +5,7 @@
 #include <vector>
 
 struct DetectionWithFeatureVector {
+    std::string timestamp;
     long long int frame_id;
     int bbox_x;
     int bbox_y;
