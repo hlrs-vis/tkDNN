@@ -16,9 +16,10 @@ void KafkaProducer::produceMessage(const string& topic, const string& message, c
 
     // Produce the message
     try {
-
         producer.produce(MessageBuilder(topic).partition(partition).payload(message));
+        std::cout << "produced?"  << std::endl;
     } catch (const cppkafka::HandleException& e) {
         std::cerr << "Error:" << e.what() << std::endl;
     }
+    
 }

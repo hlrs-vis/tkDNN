@@ -216,10 +216,9 @@ private:
         TF_DeleteStatus(status);
     }
     void runInference(const cv::Mat imagePatch) {
-        std::cout << "Test" << std::endl;
+
         TF_Tensor* inputTensor = createTensorFromMat(imagePatch);
         TF_Tensor* inputTensorPtr = inputTensor;
-        std::cout << "Test" << std::endl;
         TF_Tensor* outputTensor = createOutputTensor();
         TF_Tensor* outputTensorPtr = outputTensor;
         // Run inference
@@ -236,7 +235,6 @@ private:
                       nullptr,          // TF_Buffer*,    run metadata (nullptr for default options)
                       status            // TF_Status*,    status
         );
-        std::cout << "Test" << std::endl;
         if (TF_GetCode(status) == TF_OK && outputTensor != nullptr) {
             // Access the data pointer of the output tensor
             float* outputData = static_cast<float*>(TF_TensorData(outputTensor));
@@ -263,7 +261,7 @@ private:
                 }
                 // Print the received data
                 std::cout << "Received data:" << std::endl;
-                for (int i = 0; i < outputShape[0]; ++i) {
+                for (int i = 0; i < batchSize; ++i) {
                     std::cout << "Batch " << i << ":" << std::endl;
                     for (int j = 0; j < outputShape[1]; ++j) {
                         std::cout << outputData[i * outputShape[1] + j] << " ";
@@ -285,28 +283,27 @@ private:
         // Resize image to match spatial dimensions (128x64)
         cv::Mat resizedImage;
         cv::resize(image, resizedImage, cv::Size(128, 64));
-        // Convert the image to uint8 data type
-        cv::Mat uint8Image;
-        resizedImage.convertTo(uint8Image, CV_8UC3, 1.0/ 255.0); // Convert to unsigned 8-bit integers
 
-        // Expand dimensions to include batch dimension (-1)
-        cv::Mat batchedImage;
-        cv::merge(std::vector<cv::Mat>{uint8Image}, batchedImage); // Add batch dimension
-        
-        return batchedImage;
+        if (!resizedImage.empty()) {
+            cv::imshow("Image", resizedImage);
+            cv::waitKey(0);  
+            cv::destroyAllWindows(); 
+        } 
+        else {
+            std::cerr << "Failed to load image!" << std::endl;
+        }
+        return resizedImage;
     }
+
     TF_Tensor* createTensorFromMat(const cv::Mat& image) {
         // Ensure the image is not empty
         if (image.empty()) {
             return nullptr;
         }
-
         // Define the dimensions of the tensor
         std::vector<int64_t> dims = {1, image.cols, image.rows, image.channels()};
-
         // Calculate the total size of the data buffer
         size_t len = image.total() * image.elemSize();
-
         // Create a new tensor with the given dimensions and uint8 data type
         TF_Tensor* tensor = TF_NewTensor(TF_UINT8, dims.data(), static_cast<int>(dims.size()), image.data, len, [](void* data, size_t len, void* arg) {
             // No need to deallocate memory here since we're using the original image data
@@ -314,13 +311,14 @@ private:
         if (tensor == nullptr) {
             // Error handling: Log an error message or take appropriate action
             std::cerr << "Error creating outputTensor." << std::endl;
-        } else {
+        } 
+        else {
             // Output tensor created successfully
             printTensorDims(tensor);
         }
-
         return tensor;
     }
+
     TF_Tensor* createOutputTensor(){
         int64_t outputDims[] = {1, 128}; // Assuming the output shape is (1, 128)
         int numDimsOut = 2; // Number of dimensions for the output tensor
@@ -358,7 +356,7 @@ private:
 
 int main() {
     
-    cv::Mat image = cv::imread("cow.png");
+    cv::Mat image = cv::imread("person.png");
     
     if (!image.empty()) {
         cv::imshow("Image", image);

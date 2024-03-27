@@ -12,14 +12,16 @@ using namespace cppkafka;
 using json = nlohmann::json;
 
 cv::Mat readImage(const string& filename);
-
 string getTime();
 
 int main() {
-
+    KafkaProducer* kafkaProducer = nullptr;
+    if (true) {
+        kafkaProducer = new KafkaProducer("localhost:9092");
+        std::cout << "initialized"  << std::endl;
+    }
     int partition = 0;
     string topic = "timed-images";
-    KafkaProducer kafka_producer("localhost:9092");
     string timestamp = getTime();
     json frame;
     frame["frame_id"] = "1";
@@ -38,11 +40,12 @@ int main() {
         frame["detections"].push_back(detection);
     }
 
-
     string serialized_message = frame.dump();
-    kafka_producer.produceMessage(topic, serialized_message, partition);
-    
-    
+    if (kafkaProducer) {
+        kafkaProducer->produceMessage(topic, serialized_message, partition);
+        std::cout << "produced?"  << std::endl;
+    }
+    delete kafkaProducer;
 }
 
 string getTime() {
