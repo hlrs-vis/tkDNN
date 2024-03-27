@@ -274,6 +274,13 @@ find_package(CppKafka REQUIRED)
 
 target_link_libraries(tkDNN CppKafka::cppkafka)
 
+#THREADS
+find_package(Boost REQUIRED COMPONENTS thread)
+target_link_libraries(tkDNN Boost::thread)
+target_link_libraries(demoGeneral tkDNN CppKafka::cppkafka Boost::thread)
+find_package(Threads REQUIRED)
+target_link_libraries(tkDNN Threads::Threads)
+
 # TENSORFLOW
 set(TF_INCLUDE_DIR "/usr/local/include")
 set(TF_LIB_DIR "/usr/local/lib")
