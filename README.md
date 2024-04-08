@@ -1,5 +1,23 @@
-# deepsort 
+# deepSORT
 in this paragraph only the additional dependencies for the deepsort branch are explained 
+
+## Setting up a Jetson AGX for deepsort usage with tkDNN
+
+
+### VSCode
+While working on deepsort a bug prevented newer version of VSCode from starting, last working one: 
+```
+wget https://update.code.visualstudio.com/1.50.0/linux-deb-arm64/stable -O stable.deb 
+sudo dpkg -i stable.deb
+```
+
+## OpenCV
+
+[OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
+  Short version, assuming Cuda and Cudnn are installed correctly:
+  ```
+  $ scripts/install_OpenCV4.sh
+  ```
 
 ## Kafka
 
@@ -9,17 +27,21 @@ Download Kafka:
 Information on setting up a Kafka Environment:
 [Quickstart](https://kafka.apache.org/quickstart)
 
-[cppkafka](https://github.com/mfontanini/cppkafka) needed for C++ integration
-
-  which is build on
-  librdkafka: 
+Getting [librdkafka](https://github.com/confluentinc/librdkafka): 
+to use in cpp/python/etc.
   ```
   $ apt install librdkafka-dev
   ```
-  or build from source:
-  [librdkafka](https://github.com/confluentinc/librdkafka)
+[cppkafka](https://github.com/mfontanini/cppkafka) needed for C++ integration
+  
+
+[confluent-kafka](https://docs.confluent.io/kafka-clients/python/current/overview.html) needed for python integration
+   ```
+  $ pip install confluent-kafka
+  ```
 
 below is the old README for base dependencies
+
 
 
 # tkDNN 
