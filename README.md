@@ -40,6 +40,23 @@ to use in cpp/python/etc.
   $ pip install confluent-kafka
   ```
 
+Use
+```
+ $ ./scripts/startup_services.sh
+```
+to start the zookeeper and kafka server and create a topic called "timed-images"
+## Setting up the deep_sort part
+
+### Dependencies
+
+Tensorflow:
+```
+$ pip install tensorflow
+```
+generateDetections.py is developed on tensorflowV1 but is changed to work with V2
+
+[MOMC repository](https://github.com/hlrs-vis/multi-object-multi-camera-tracker)
+
 below is the old README for base dependencies
 
 
