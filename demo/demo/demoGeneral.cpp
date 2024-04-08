@@ -6,9 +6,10 @@
 #include <unistd.h>
 #include <mutex>
 #include <https_stream.h> //https_stream
-#include <JsonComposer.h>
+#include "/usr/local/src/git/tkDNN/include/tkDNN/JsonComposer.h"
 #include "CSVComposer.h"
 #include "DetectionWithFeatureVector.h"
+#include <sys/stat.h>
 
 #include <chrono>
 #include <ctime>
@@ -87,12 +88,14 @@ int main(int argc, char *argv[]){
     int json_port = 0;
     std::string json_file = std::string();
     std::ofstream jsonfilestream;
-    std::string csvFileName = std::string();
+    std::string csv_path = std::string();
     std::ofstream csvFileStream;
     bool deepsort_processing = false;
     bool kafka = false;
     bool tensorflow = false;
     int cam_id = 1;
+    std::string images_path = std::string("/media/deep_sort_data/images");
+    int save_images = 0;
     std::string net = std::string("yolo4_int8.rt");
     std::string inputvideo = std::string("../demo/yolo_test.mp4");
     char input_ntype = 'y';
@@ -106,6 +109,7 @@ int main(int argc, char *argv[]){
     int extyolo = 0;
     int video_mode = 0;
     int frame_rate = 30;
+    std::string last_frame = "0";
     int flip = 0;
     bool playback = false;
     bool save_calibration_images = 0;
@@ -139,8 +143,8 @@ int main(int argc, char *argv[]){
                 json_port = configtree.get<int>("tkdnn.json_port");
             if (child.first == "json_file")
                 json_file = configtree.get<std::string>("tkdnn.json_file");
-            if (child.first == "csvFileName")
-                csvFileName = configtree.get<std::string>("tkdnn.csvFileName");
+            if (child.first == "csv_path")
+                csv_path = configtree.get<std::string>("tkdnn.csv_path");
             if (child.first == "deepsort_processing")
                 deepsort_processing = configtree.get<bool>("tkdnn.deepsort_processing");
             if (child.first == "kafka")
@@ -166,6 +170,8 @@ int main(int argc, char *argv[]){
                 show_video = configtree.get<int>("tkdnn.show_video");
             if (child.first == "save_video")
                 save_video = configtree.get<int>("tkdnn.save_video");
+            if (child.first == "save_images")
+                save_images = configtree.get<int>("tkdnn.save_images");
             if (child.first == "draw_detections")
                 draw_detections = configtree.get<int>("tkdnn.draw_detections");
             if (child.first == "black_output")
@@ -200,6 +206,8 @@ int main(int argc, char *argv[]){
                 save_json_path = configtree.get<std::string>("tkdnn.save_json_path");
             if (child.first == "save_background_image_path")
                 save_background_image_path = configtree.get<std::string>("tkdnn.save_background_image_path");
+            if (child.first == "images_path")
+                images_path = configtree.get<std::string>("tkdnn.images_path");
             if (child.first == "name_input")
                 name_input = configtree.get<std::string>("tkdnn.name_input");
             if (child.first == "cfg_input")
@@ -316,18 +324,37 @@ int main(int argc, char *argv[]){
         jsonfilestream.open(json_file);
         jsonfilestream << "[";
     }
-    std::cout << csvFileName << "\n";
-    if (csvFileName.size() > 0){
-        
+    std::string new_dir = images_path + "Aufnahme" + date;
+    int dir = mkdir(new_dir.c_str(), 0777);
+    if (dir == 0) {
+        std::cout << "New folder"  << new_dir << " created." << std::endl;
+    }
+    else {
+        std::cout << "Failed to create new folder"  << new_dir << std::endl;
+    }
+    std::string img_dir = new_dir + "/img1";
+    dir = mkdir(img_dir.c_str(), 0777);
+    if (dir == 0) {
+        std::cout << "New folder"  << img_dir << " created." << std::endl;
+    }
+    else {
+        std::cout << "Failed to create new folder"  << img_dir << std::endl;
+    }
+    std::string det_dir = new_dir + "/det";
+    dir = mkdir(det_dir.c_str(), 0777);
+    if (dir == 0) {
+        std::cout << "New folder"  << det_dir << " created." << std::endl;
+    }
+    else {
+        std::cout << "Failed to create new folder"  << det_dir << std::endl;
+    }
+    if (csv_path.size() > 0){
         writeCsv = true;
-        
-        csvFileStream.open(csvFileName);
-        
         csv = new CSVComposer;
     }
     else writeCsv = false;
     if (writeCsv == true){
-    csv->initiate(csvFileName, csvFileStream, inputvideo);
+    csv->initiate(det_dir, csvFileStream);
     }
 
     if (write_json || json_port > 0){
@@ -390,7 +417,7 @@ int main(int argc, char *argv[]){
     if (save_video){   
         int w = video->getWidth();
         int h = video->getHeight();
-    std::string resultVideoFile = "Videoresult";
+    std::string resultVideoFile = save_background_image_path+"Videoresult";
     resultVideoFile = resultVideoFile.append(date);
     resultVideoFile = resultVideoFile.append(".mp4");
         resultVideo.open(resultVideoFile, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
@@ -542,10 +569,20 @@ int main(int argc, char *argv[]){
                     resultVideo << batch_frame[bi];
                 }
                 //resultVideo << batch_frame[0];
-            }   
-            if (mjpeg_port > 0){
-                send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
             }
+            if (save_images){
+                for (int bi = 0; bi < n_batch; ++bi){
+                    std::stringstream filename_stream;
+                    last_frame = to_string((*batch_images)[bi].frame_id);
+                    filename_stream << "/" << setw(6) << setfill('0') << last_frame << ".jpg";
+                    std::string filename = filename_stream.str();
+                    cv::imwrite(img_dir + filename, batch_frame[bi]);
+                    
+                }
+            }   
+            // if (mjpeg_port > 0){
+            //     send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
+            // }
 	    }
         if(deepsort_processing){
             // Code which does the generation of detections and then sends those via kafka
@@ -574,10 +611,10 @@ int main(int argc, char *argv[]){
         if (write_json || json_port > 0){
             //send_json(batch_images, *detNN, json_port, 40000);
             char *send_buf = jsonC->detection_to_json(batch_images, *detNN, NULL);
-            if (json_port > 0)
-            {
-                send_json(send_buf, json_port, 40000);
-            }
+            // if (json_port > 0)
+            // {
+            //     send_json(send_buf, json_port, 40000);
+            // }
             if (!json_file.empty())
             {
                 if (json_frames_written != 0)
@@ -622,6 +659,16 @@ int main(int argc, char *argv[]){
                 << COL_END;
     }
     std::cout << COL_GREENB << "Frames overall: " << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
+    std::ofstream seqfile(new_dir + "/seqinfo.ini");
+    seqfile<< "[Sequence]\n";
+    seqfile<< "name="+new_dir.substr((new_dir.find_last_of("/\\"))+1)+"\n";
+    seqfile<< "imDir=img1\n";
+    seqfile<< "frameRate=" << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << "\n";
+    seqfile<< "seqLength="+last_frame+"\n";
+    seqfile<< "imWidth=1920\n";
+    seqfile<< "imHeight=1080\n";
+    seqfile<< "imExt=.jpg\n";
+    std::cout << "Created Images, detections and seqinfo.ini in:" << new_dir;
 
     return 0;
 }
