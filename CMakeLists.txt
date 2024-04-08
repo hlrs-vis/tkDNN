@@ -86,10 +86,10 @@ set(ENABLE_OPENCV_CUDA_CONTRIB ON)
 #set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS} -arch=sm_30 --compiler-options '-fPIC'")
 
 
-#find_package(CUDNN REQUIRED)
+# find_package(CUDNN REQUIRED)
 # Set CuDNN paths manually
-set(CUDNN_INCLUDE_DIR "/usr/local/cuda-11.8/include")
-set(CUDNN_LIBRARY "/usr/local/cuda-11.8/lib64/libcudnn.so")  # Adjust the library name if necessary
+set(CUDNN_INCLUDE_DIR "/usr/local/cuda-11.8/targets/aarch64-linux/include")
+set(CUDNN_LIBRARY "/usr/local/cuda-11.8/targets/aarch64-linux/lib64/libcudnn.so")  
 
 include_directories(${CUDNN_INCLUDE_DIR})
 
@@ -171,9 +171,11 @@ file(GLOB tkdnn_SRC "src/*.cpp")
 set(tkdnn_LIBS kernels ${CUDA_LIBRARIES} ${CUDA_CUBLAS_LIBRARIES} ${CUDNN_LIBRARIES} ${OpenCV_LIBS} yaml-cpp)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fconcepts")
+include_directories(/usr/src/TensorRT-8.5.2.2/include)
+link_directories(/usr/src/TensorRT-8.5.2.2/lib)
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/include/tkDNN ${CUDA_INCLUDE_DIRS} ${OPENCV_INCLUDE_DIRS} ${NVINFER_INCLUDES})
 add_library(tkDNN SHARED ${tkdnn_SRC})
-target_link_libraries(tkDNN ${tkdnn_LIBS} ${CUDA_CUBLAS_LIBRARIES} ids_opencv_worker)
+target_link_libraries(tkDNN ${tkdnn_LIBS} ${CUDA_CUBLAS_LIBRARIES} ids_opencv_worker nvinfer)
 
 #static 
 #add_library(tkDNN_static STATIC ${tkdnn_SRC})
