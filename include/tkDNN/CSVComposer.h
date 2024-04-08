@@ -14,7 +14,7 @@ class CSVComposer{
 
     public:
         CSVComposer();
-        void initiate(const std::string &csvFileName, std::ofstream &csvFileStream, const std::string &inputVideo);
+        void initiate(const std::string &csvFileName, std::ofstream &csvFileStream);
         void detectionToCsv(std::vector<TypewithMetadata<cv::Mat>> *batch_images, tk::dnn::DetectionNN &detNN, std::ofstream &csvFileStream);
         void setResolution(int width, int height);
     protected:
