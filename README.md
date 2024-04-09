@@ -10,7 +10,29 @@ While working on deepsort a bug prevented newer version of VSCode from starting,
 wget https://update.code.visualstudio.com/1.50.0/linux-deb-arm64/stable -O stable.deb 
 sudo dpkg -i stable.deb
 ```
+### General Setup
+```
+$ sudo apt-get update
+$ sudo apt-get upgrade
+$ sudo mkdir /usr/local/src/git
+$ sudo cd /usr/local/src/git
+$ sudo chmod 777 .
+```
+#### Configure Git
+[SSH Key]([https://docs.github.com/de/authentication/connecting-to-github-with-ssh/adding-a-new-ssh-key-to-your-github-account](https://docs.github.com/de/authentication/connecting-to-github-with-ssh/generating-a-new-ssh-key-and-adding-it-to-the-ssh-agent))
 
+``` 
+$ git clone git@github.com:tobst/tkDNN.git
+
+```
+#### CMake 
+``` 
+$ sudo apt-get install cmake
+$ sudo apt-get install cmake gcc g++
+
+```
+
+$ sudo apt install libyaml-cpp-dev curl libeigen3-dev
 ## OpenCV
 
 [OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
