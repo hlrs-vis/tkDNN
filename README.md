@@ -2,7 +2,7 @@
 in this paragraph only the additional dependencies for the deepsort branch are explained 
 
 ## Setting up a Jetson AGX for deepsort usage with tkDNN
-
+Please take a look at README_JETSONSETUP.md
 
 ### VSCode
 While working on deepsort a bug prevented newer version of VSCode from starting, last working one: 
