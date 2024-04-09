@@ -34,6 +34,7 @@ $ sudo apt-get install libgtk-3-dev
 $ wget https://bootstrap.pypa.io/get-pip.py
 $ sudo python3 get-pip.py
 $ pip3 install virtualenv virtualenvwrapper
+$ sudo apt install nano
 $ nano ~/.bashrc
 ```
 add these lines at the bottom:
@@ -59,6 +60,11 @@ $ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
 $ sudo apt-get install libv4l-dev libxvidcore-dev libx264-dev
 $ sudo apt-get install libatlas-base-dev gfortran
 $ sudo apt-get install libboost-all-dev
+$ pip install v4l2ctl
+$ deactivate (if still in opencv_cuda)
+$ sudo pip3 install -U jetson-stats
+$ sudo systemctl restart jtop.service
+$ sudo jtop (test if cuda is working)
 ```
 #### IDS-Peak
 Get debfile from another jetson.
@@ -83,6 +89,8 @@ $ sudo apt install libyaml-cpp-dev curl libeigen3-dev
 [OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
   Short version, assuming Cuda and Cudnn are installed correctly, use the script, after changing version and workspace inside.
   ```
+  $ cd /usr/local/src/git/tkDNN
+  $ git checkout deepsort
   $ scripts/install_OpenCV4.sh
   ```
 
@@ -97,7 +105,7 @@ Information on setting up a Kafka Environment:
 Getting [librdkafka](https://github.com/confluentinc/librdkafka): 
 to use in cpp/python/etc.
   ```
-  $ apt install librdkafka-dev
+  $ sudo apt install librdkafka-dev
   ```
 [cppkafka](https://github.com/mfontanini/cppkafka) needed for C++ integration
   
