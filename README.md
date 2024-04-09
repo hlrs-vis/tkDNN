@@ -23,8 +23,53 @@ $ sudo chmod 777 .
 
 ``` 
 $ git clone git@github.com:tobst/tkDNN.git
+$ git clone git@github.com:nlohmann/json.git
+$ mkdir build && cd build && cmake .. && make -j8 && sudo make install
 
 ```
+
+```
+$ sudo apt-get install python3-dev python3-tk python-imaging-tk
+$ sudo apt-get install libgtk-3-dev
+$ wget https://bootstrap.pypa.io/get-pip.py
+$ sudo python3 get-pip.py
+$ pip3 install virtualenv virtualenvwrapper
+$ nano ~/.bashrc
+```
+add these lines at the bottom:
+```
+# virtualenv and virtualenvwrapper
+export WORKON_HOME=$HOME/.local/bin/.virtualenvs
+export VIRTUALENVWRAPPER_PYTHON=/usr/bin/python3
+export VIRTUALENVWRAPPER_VIRTUALENV=$HOME/.local/bin/virtualenv
+source $HOME/.local/bin/virtualenvwrapper.sh
+```
+Ctrl + S, Ctrl + X
+```
+$ source ~/.bashrc
+$ mkvirtualenv opencv_cuda -p python3
+$ workon opencv_cuda
+$ pip install numpy
+$ pip install opencv-contrib-python
+$ pip install scikit-image
+$ pip install pillow
+$ pip install imutils
+$ sudo apt-get install libjpeg-dev libpng-dev libtiff-dev
+$ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
+$ sudo apt-get install libv4l-dev libxvidcore-dev libx264-dev
+$ sudo apt-get install libatlas-base-dev gfortran
+$ sudo apt-get install libboost-all-dev
+```
+#### IDS-Peak
+Get debfile from another jetson.
+```
+$ sudo dpkg -i ids-peak-linux-arm64-1.3.1.0.deb 
+```
+Alot of packages will be missing.
+```
+$ sudo apt --fix-broken install
+```
+
 #### CMake 
 ``` 
 $ sudo apt-get install cmake
@@ -33,15 +78,15 @@ $ sudo apt-get install cmake gcc g++
 ```
 
 $ sudo apt install libyaml-cpp-dev curl libeigen3-dev
-## OpenCV
+### OpenCV
 
 [OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
-  Short version, assuming Cuda and Cudnn are installed correctly:
+  Short version, assuming Cuda and Cudnn are installed correctly, use the script, after changing version and workspace inside.
   ```
   $ scripts/install_OpenCV4.sh
   ```
 
-## Kafka
+### Kafka
 
 Download Kafka:
 [Kafka](https://www.apache.org/dyn/closer.cgi?path=/kafka/3.6.1/kafka_2.13-3.6.1.tgz)
