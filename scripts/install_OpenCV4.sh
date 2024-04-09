@@ -1,72 +1,76 @@
 #!/bin/bash
+#
+# Copyright (c) 2022, NVIDIA CORPORATION.  All rights reserved.
+#
+# NVIDIA Corporation and its licensors retain all intellectual property
+# and proprietary rights in and to this software, related documentation
+# and any modifications thereto.  Any use, reproduction, disclosure or
+# distribution of this software and related documentation without an express
+# license agreement from NVIDIA Corporation is strictly prohibited.
+#
 
-#based on https://devtalk.nvidia.com/default/topic/1042035/installing-opencv4-on-xavier/ & https://github.com/markste-in/OpenCV4XAVIER/blob/master/buildOpenCV4.sh
+version="4.9.0"
+folder="/usr/src/opencv-${version}"
 
-# Compute Capabilities can be found here https://developer.nvidia.com/cuda-gpus#compute
-ARCH_BIN=7.2 # AGX Xavier
-#ARCH_BIN=6.2 # Tx2
+set -e
 
-cd ~/Downloads
-sudo apt-get install -y build-essential \
-    unzip \
-    pkg-config \
-    libjpeg-dev \
-    libpng-dev \
-    libtiff-dev \
-    libavcodec-dev \
-    libavformat-dev \
-    libswscale-dev \
-    libv4l-dev \
-    libxvidcore-dev \
-    libx264-dev \
-    libgtk-3-dev \
-    libatlas-base-dev \
-    gfortran \
-    python3-dev \
-    python3-venv \
-    libgstreamer1.0-dev \
-    libgstreamer-plugins-base1.0-dev \
-    libdc1394-22-dev \
-    libavresample-dev \
-    libtbb-dev \
+for (( ; ; ))
+do
+    echo "Do you want to remove the default OpenCV (yes/no)?"
+    read rm_old
 
-git clone https://github.com/opencv/opencv.git
-cd opencv && git checkout 4.5.4 && cd ..
-git clone https://github.com/opencv/opencv_contrib.git
-cd opencv_contrib && git checkout 4.5.4 && cd ..
+    if [ "$rm_old" = "yes" ]; then
+        echo "** Remove other OpenCV first"
+        sudo apt -y purge *libopencv*
+	break
+    elif [ "$rm_old" = "no" ]; then
+	break
+    fi
+done
 
 
-python3 -m venv opencv4
-source opencv4/bin/activate
-pip install wheel
-pip install numpy
+echo "------------------------------------"
+echo "** Install requirement (1/4)"
+echo "------------------------------------"
+sudo apt-get update
+sudo apt-get install -y build-essential cmake git libgtk2.0-dev pkg-config libavcodec-dev libavformat-dev libswscale-dev
+sudo apt-get install -y libgstreamer1.0-dev libgstreamer-plugins-base1.0-dev
+sudo apt-get install -y python3.8-dev python-dev python-numpy python3-numpy
+sudo apt-get install -y libtbb2 libtbb-dev libjpeg-dev libpng-dev libtiff-dev libdc1394-22-dev
+# sudo apt-get install -y libv4l-dev v4l-utils qv4l2 v4l2ucp
+sudo apt-get install -y curl
 
-cd opencv &&  mkdir build && cd build
 
-cmake -D CMAKE_BUILD_TYPE=RELEASE \
-    -D CMAKE_INSTALL_PREFIX=/usr/local \
-    -D INSTALL_PYTHON_EXAMPLES=ON \
-    -D INSTALL_C_EXAMPLES=OFF \
-    -D OPENCV_EXTRA_MODULES_PATH='~/Downloads/opencv_contrib/modules' \
-    -D PYTHON_EXECUTABLE='~/Downloads/opencv4/bin/python' \
-    -D BUILD_EXAMPLES=ON \
-    -D WITH_CUDA=ON \
-    -D CUDA_ARCH_BIN=${ARCH_BIN} \
-    -D CUDA_ARCH_PTX="" \
-    -D ENABLE_FAST_MATH=ON \
-    -D CUDA_FAST_MATH=ON \
-    -D WITH_CUBLAS=ON \
-    -D WITH_LIBV4L=ON \
-    -D WITH_GSTREAMER=ON \
-    -D WITH_GSTREAMER_0_10=OFF \
-    -D WITH_TBB=ON \
-    -D WITH_OPENGL=ON \
-    -D WITH_VULKAN=ON \
-    ../
+echo "------------------------------------"
+echo "** Download opencv "${version}" (2/4)"
+echo "------------------------------------"
+mkdir $folder
+cd ${folder}
+curl -L https://github.com/opencv/opencv/archive/${version}.zip -o opencv-${version}.zip
+curl -L https://github.com/opencv/opencv_contrib/archive/${version}.zip -o opencv_contrib-${version}.zip
+unzip opencv-${version}.zip
+unzip opencv_contrib-${version}.zip
+rm opencv-${version}.zip opencv_contrib-${version}.zip
+cd opencv-${version}/
 
-make -j4
+
+echo "------------------------------------"
+echo "** Build opencv "${version}" (3/4)"
+echo "------------------------------------"
+mkdir release
+cd release/
+cmake -D WITH_CUDA=ON -D WITH_CUDNN=ON -D CUDA_ARCH_BIN="7.2,8.7" -D CUDA_ARCH_PTX="" -D OPENCV_GENERATE_PKGCONFIG=ON -D OPENCV_EXTRA_MODULES_PATH=../../opencv_contrib-${version}/modules -D WITH_GSTREAMER=ON -D WITH_LIBV4L=ON -D BUILD_opencv_python3=ON -D BUILD_TESTS=OFF -D BUILD_PERF_TESTS=OFF -D BUILD_EXAMPLES=OFF -D CMAKE_BUILD_TYPE=RELEASE -D CMAKE_INSTALL_PREFIX=/usr/local ..
+make -j$(nproc)
+
+
+echo "------------------------------------"
+echo "** Install opencv "${version}" (4/4)"
+echo "------------------------------------"
 sudo make install
-sudo ldconfig
+echo 'export LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH' >> ~/.bashrc
+echo 'export PYTHONPATH=/usr/local/lib/python3.8/site-packages/:$PYTHONPATH' >> ~/.bashrc
+source ~/.bashrc
 
-cd ~/Downloads/opencv4/lib/python3.6/site-packages
-ln -s /usr/local/lib/python3.6/site-packages/cv2.cpython-36m-aarch64-linux-gnu.so cv2.so
+
+echo "** Install opencv "${version}" successfully"
+echo "** Bye :)"

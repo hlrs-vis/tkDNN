@@ -275,26 +275,26 @@ target_link_libraries(demoTracker tkDNN)
 add_executable(seg_demo demo/demo/seg_demo.cpp)
 target_link_libraries(seg_demo tkDNN)
 
-# KAFKA
-find_package(CppKafka REQUIRED)
+# KAFKA disabled for now
+# find_package(CppKafka REQUIRED)
 
-target_link_libraries(tkDNN CppKafka::cppkafka)
+# target_link_libraries(tkDNN CppKafka::cppkafka)
 
 #THREADS
 find_package(Boost REQUIRED COMPONENTS thread)
 target_link_libraries(tkDNN Boost::thread)
-target_link_libraries(demoGeneral tkDNN CppKafka::cppkafka Boost::thread)
+# target_link_libraries(demoGeneral tkDNN CppKafka::cppkafka Boost::thread)
 find_package(Threads REQUIRED)
 target_link_libraries(tkDNN Threads::Threads)
 
-# TENSORFLOW
-set(TF_INCLUDE_DIR "/usr/local/include")
-set(TF_LIB_DIR "/usr/local/lib")
-include_directories(${TF_INCLUDE_DIR})
-find_library(TENSORFLOW_LIB tensorflow HINTS /usr/local/lib)
-target_link_libraries(tkDNN ${TENSORFLOW_LIB})
-target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow_framework.so)
-target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow.so)
+# TENSORFLOW disabled for now
+# set(TF_INCLUDE_DIR "/usr/local/include")
+# set(TF_LIB_DIR "/usr/local/lib")
+# include_directories(${TF_INCLUDE_DIR})
+# find_library(TENSORFLOW_LIB tensorflow HINTS /usr/local/lib)
+# target_link_libraries(tkDNN ${TENSORFLOW_LIB})
+# target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow_framework.so)
+# target_link_libraries(tkDNN ${TF_LIB_DIR}/libtensorflow.so)
 
 # JSON
 set(CMAKE_PREFIX_PATH "/usr/local/src/git/json/build")

@@ -6,7 +6,7 @@
 #include <unistd.h>
 #include <mutex>
 #include <https_stream.h> //https_stream
-#include "/usr/local/src/git/tkDNN/include/tkDNN/JsonComposer.h"
+#include "JsonComposer.h"
 #include "CSVComposer.h"
 #include "DetectionWithFeatureVector.h"
 #include <sys/stat.h>
@@ -18,8 +18,8 @@
 #include "CenternetDetection.h"
 #include "MobilenetDetection.h"
 #include "Yolo3Detection.h"
-#include "GenerateDetections.h"
-#include "KafkaProducer.h"
+// #include "GenerateDetections.h"
+// #include "KafkaProducer.h"
 
 
 #include "SharedQueue.h"
@@ -51,7 +51,7 @@ int main(int argc, char *argv[]){
 
     JsonComposer* jsonC = NULL;
     CSVComposer* csv = NULL;
-    KafkaProducer* kafkaProducer = NULL;
+    // KafkaProducer* kafkaProducer = NULL;
     ImageEncoder* encoder = NULL;
 
     ptree configtree;
@@ -361,13 +361,13 @@ int main(int argc, char *argv[]){
         jsonC = new JsonComposer;
     }
     if (deepsort_processing) {
-        if (kafka){
-            kafkaProducer = new KafkaProducer("localhost:9092");
-        }
-        if (tensorflow) {
-            std::string checkpointFilename ="../deep_sort/resources/mars-small128.pb";
-            encoder = new ImageEncoder(checkpointFilename);
-        }
+        // if (kafka){
+        //     kafkaProducer = new KafkaProducer("localhost:9092");
+        // }
+        // if (tensorflow) {
+        //     std::string checkpointFilename ="../deep_sort/resources/mars-small128.pb";
+        //     encoder = new ImageEncoder(checkpointFilename);
+        // }
     }
     
 
@@ -586,26 +586,26 @@ int main(int argc, char *argv[]){
 	    }
         if(deepsort_processing){
             // Code which does the generation of detections and then sends those via kafka
-            std::vector<std::vector<DetectionWithFeatureVector>> detections;
-            if(tensorflow) {
-                detections = encoder->generateDetections(batch_images, *detNN); 
-            }
-            if(tensorflow && kafka) {
-                //send the Detections via Kafka
-                int partition = 0;
-                std::string topic_name = "timed-images";
-                vector<json> jsonDetections = kafkaProducer->turnDetectionsToJson(detections, cam_id);    
-                for (int i = 0; i < jsonDetections.size(); ++i) {
-                    string message = jsonDetections[i].dump();
-                    kafkaProducer->produceMessage(topic_name, message, partition);
-                }
-            }
-            if(!tensorflow && kafka) {
-                //if no detections where created just send a test message
-                int partition = 0;
-                std::string topic_name = "timed-images";
-                kafkaProducer->produceMessage(topic_name, "test", partition);
-            }
+            // std::vector<std::vector<DetectionWithFeatureVector>> detections;
+            // if(tensorflow) {
+            //     detections = encoder->generateDetections(batch_images, *detNN); 
+            // }
+            // if(tensorflow && kafka) {
+            //     //send the Detections via Kafka
+            //     int partition = 0;
+            //     std::string topic_name = "timed-images";
+            //     vector<json> jsonDetections = kafkaProducer->turnDetectionsToJson(detections, cam_id);    
+            //     for (int i = 0; i < jsonDetections.size(); ++i) {
+            //         string message = jsonDetections[i].dump();
+            //         kafkaProducer->produceMessage(topic_name, message, partition);
+            //     }
+            // }
+            // if(!tensorflow && kafka) {
+            //     //if no detections where created just send a test message
+            //     int partition = 0;
+            //     std::string topic_name = "timed-images";
+            //     kafkaProducer->produceMessage(topic_name, "test", partition);
+            // }
         }
 
         if (write_json || json_port > 0){
@@ -637,12 +637,12 @@ int main(int argc, char *argv[]){
     resultVideo.release();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
     if (deepsort_processing) {
-        if(tensorflow){
-            delete encoder;
-        }
-        if(kafka) {
-            delete kafkaProducer;
-        }
+        // if(tensorflow){
+        //     delete encoder;
+        // }
+        // if(kafka) {
+        //     delete kafkaProducer;
+        // }
     }
     std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
 
