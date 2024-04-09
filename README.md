@@ -271,6 +271,22 @@ Steps needed to do inference on tkDNN with a custom neural network.
 
 For specific details on how to export weights see [HERE](./docs/exporting_weights.md).
 
+```
+$ cd /usr/local/src/git
+$ git clone https://git.hipert.unimore.it/fgatti/darknet.git
+$ cd darknet
+$ make
+$ mkdir layers debug
+```
+[Yolov4 Weights](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights&ved=2ahUKEwj_oIbEs7WFAxUNhP0HHTtnCD4QFnoECA8QAQ&usg=AOvVaw30if4joxtTaS8DAh12vYQ4)
+
+```
+$ ./darknet export ./cfg/yolov4.cfg ~/Downloads/yolov4.weights layers
+$ cp -r ./layers ../tkDNN/build/yolo4/
+$ cp -r ./debug ../tkDNN/build/yolo4/
+```
+Alternativly weights are in the table below.
+
 ## Darknet Parser
 tkDNN implement and easy parser for darknet cfg files, a network can be converted with *tk::dnn::darknetParser*:
 ```
