@@ -40,6 +40,7 @@ $ sudo apt-get install libgtk-3-dev
 $ wget https://bootstrap.pypa.io/get-pip.py
 $ sudo python3 get-pip.py
 $ pip3 install virtualenv virtualenvwrapper
+$ sudo apt install nano
 $ nano ~/.bashrc
 ```
 add these lines at the bottom:
@@ -66,6 +67,11 @@ $ sudo apt-get install libv4l-dev libxvidcore-dev libx264-dev
 $ sudo apt-get install libatlas-base-dev gfortran
 $ sudo apt-get install libboost-all-dev
 $ sudo apt install libyaml-cpp-dev curl libeigen3-dev
+$ pip install v4l2ctl
+$ deactivate (if still in opencv_cuda)
+$ sudo pip3 install -U jetson-stats
+$ sudo systemctl restart jtop.service
+$ sudo jtop (test if cuda is working)
 ```
 #### IDS-Peak
 Get debfile from another jetson.
@@ -82,6 +88,8 @@ $ sudo apt --fix-broken install
 [OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
   Short version, assuming Cuda and Cudnn are installed correctly, use the script, after changing version and workspace inside.
   ```
+  $ cd /usr/local/src/git/tkDNN
+  $ git checkout deepsort
   $ scripts/install_OpenCV4.sh
   ```
 
@@ -100,7 +108,7 @@ Information on setting up a Kafka Environment:
 Getting [librdkafka](https://github.com/confluentinc/librdkafka): 
 to use in cpp/python/etc.
   ```
-  $ apt install librdkafka-dev
+  $ sudo apt install librdkafka-dev
   ```
 [cppkafka](https://github.com/mfontanini/cppkafka) needed for C++ integration
   
@@ -116,6 +124,11 @@ Use
 ```
 to start the zookeeper and kafka server and create a topic called "timed-images"
 ## Setting up the deep_sort part
+
+```
+$ cd /usr/local/src/git/tkDNN/deep_sort
+$ mkdir MOT16 && cd MOT16 && mkdir test
+```
 
 ### Dependencies
 
@@ -255,6 +268,7 @@ cd tkDNN
 git submodule update --init --recursive
 mkdir build
 cd build
+mkdir yolo4
 cmake -DCMAKE_BUILD_TYPE=Release -G"Ninja" .. 
 ninja
 ```
@@ -270,6 +284,23 @@ Steps needed to do inference on tkDNN with a custom neural network.
 ## Exporting weights
 
 For specific details on how to export weights see [HERE](./docs/exporting_weights.md).
+
+```
+$ cd /usr/local/src/git
+$ git clone https://git.hipert.unimore.it/fgatti/darknet.git
+$ cd darknet
+$ make
+$ mkdir layers debug
+```
+[Yolov4 Weights](https://www.google.com/url?sa=t&source=web&rct=j&opi=89978449&url=https://github.com/AlexeyAB/darknet/releases/download/darknet_yolo_v3_optimal/yolov4.weights&ved=2ahUKEwj_oIbEs7WFAxUNhP0HHTtnCD4QFnoECA8QAQ&usg=AOvVaw30if4joxtTaS8DAh12vYQ4)
+
+```
+$ ./darknet export ./cfg/yolov4.cfg ~/Downloads/yolov4.weights layers
+$ cp -r ./layers ../tkDNN/build/yolo4/
+$ cp -r ./debug ../tkDNN/build/yolo4/
+```
+Alternativly weights are in the table below.
+Beware: Downloaded weights may include a "v" in their folder name e.g. "yolov4", inside the build dir the folder needs to be called "yolo4"
 
 ## Darknet Parser
 tkDNN implement and easy parser for darknet cfg files, a network can be converted with *tk::dnn::darknetParser*:

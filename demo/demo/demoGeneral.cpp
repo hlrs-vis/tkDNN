@@ -20,6 +20,7 @@
 #include "Yolo3Detection.h"
 // #include "GenerateDetections.h"
 // #include "KafkaProducer.h"
+#include <nlohmann/json.hpp>
 
 
 #include "SharedQueue.h"
@@ -52,7 +53,7 @@ int main(int argc, char *argv[]){
     JsonComposer* jsonC = NULL;
     CSVComposer* csv = NULL;
     // KafkaProducer* kafkaProducer = NULL;
-    ImageEncoder* encoder = NULL;
+    //ImageEncoder* encoder = NULL;
 
     ptree configtree;
     char *iniconfig = find_char_arg(argc, argv, "-ini", "");
@@ -573,8 +574,8 @@ int main(int argc, char *argv[]){
             if (save_images){
                 for (int bi = 0; bi < n_batch; ++bi){
                     std::stringstream filename_stream;
-                    last_frame = to_string((*batch_images)[bi].frame_id);
-                    filename_stream << "/" << setw(6) << setfill('0') << last_frame << ".jpg";
+                    last_frame = std::to_string((*batch_images)[bi].frame_id);
+                    filename_stream << "/" << std::setw(6) << std::setfill('0') << last_frame << ".jpg";
                     std::string filename = filename_stream.str();
                     cv::imwrite(img_dir + filename, batch_frame[bi]);
                     
