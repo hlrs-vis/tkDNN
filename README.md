@@ -24,7 +24,13 @@ $ sudo chmod 777 .
 ``` 
 $ git clone git@github.com:tobst/tkDNN.git
 $ git clone git@github.com:nlohmann/json.git
-$ mkdir build && cd build && cmake .. && make -j8 && sudo make install
+$ cd json && mkdir build && cd build && cmake .. && make -j8 && sudo make install
+
+```
+#### CMake 
+``` 
+$ sudo apt-get install cmake
+$ sudo apt-get install cmake gcc g++
 
 ```
 
@@ -59,6 +65,7 @@ $ sudo apt-get install libavcodec-dev libavformat-dev libswscale-dev
 $ sudo apt-get install libv4l-dev libxvidcore-dev libx264-dev
 $ sudo apt-get install libatlas-base-dev gfortran
 $ sudo apt-get install libboost-all-dev
+$ sudo apt install libyaml-cpp-dev curl libeigen3-dev
 ```
 #### IDS-Peak
 Get debfile from another jetson.
@@ -70,14 +77,6 @@ Alot of packages will be missing.
 $ sudo apt --fix-broken install
 ```
 
-#### CMake 
-``` 
-$ sudo apt-get install cmake
-$ sudo apt-get install cmake gcc g++
-
-```
-
-$ sudo apt install libyaml-cpp-dev curl libeigen3-dev
 ### OpenCV
 
 [OpenCV with Cuda in-depth tutorial](https://pyimagesearch.com/2020/02/03/how-to-use-opencvs-dnn-module-with-nvidia-gpus-cuda-and-cudnn/)
@@ -90,7 +89,11 @@ $ sudo apt install libyaml-cpp-dev curl libeigen3-dev
 
 Download Kafka:
 [Kafka](https://www.apache.org/dyn/closer.cgi?path=/kafka/3.6.1/kafka_2.13-3.6.1.tgz)
-
+```
+$ cd Downloads
+$ tar -xzf kafka_2.13-3.6.1.tgz kafka_2.13-3.6.1/
+$ mv kafka_2.13-3.6.1/ ~/Desktop
+```
 Information on setting up a Kafka Environment:
 [Quickstart](https://kafka.apache.org/quickstart)
 
@@ -123,6 +126,10 @@ $ pip install tensorflow
 generateDetections.py is developed on tensorflowV1 but is changed to work with V2
 
 [MOMC repository](https://github.com/hlrs-vis/multi-object-multi-camera-tracker)
+´´´
+$ cd /usr/local/src/git
+$ git clone git@github.com:hlrs-vis/multi-object-multi-camera-tracker.git
+´´´
 
 below is the old README for base dependencies
 
@@ -245,6 +252,7 @@ On both linux and windows ,the ```CMAKE_BUILD_TYPE``` variable needs to be defin
 ```
 git clone https://github.com/ceccocats/tkDNN
 cd tkDNN
+git submodule update --init --recursive
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Release -G"Ninja" .. 
