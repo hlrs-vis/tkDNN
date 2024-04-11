@@ -94,7 +94,10 @@ $ sudo apt --fix-broken install
   ```
 
 ### Kafka
-
+Kafka need Java:
+```
+$ sudo apt install default-jre
+```
 Download Kafka:
 [Kafka](https://www.apache.org/dyn/closer.cgi?path=/kafka/3.6.1/kafka_2.13-3.6.1.tgz)
 ```
@@ -120,9 +123,11 @@ to use in cpp/python/etc.
 
 Use
 ```
- $ ./scripts/startup_services.sh
+ $ cd /usr/local/src/tkDNN
+ $ bash scripts/startup_services.sh
 ```
-to start the zookeeper and kafka server and create a topic called "timed-images"
+to start the zookeeper and kafka server and create a topic called "timed-images".
+
 ## Setting up the deep_sort part
 
 ```
@@ -142,11 +147,67 @@ generateDetections.py is developed on tensorflowV1 but is changed to work with V
 ´´´
 $ cd /usr/local/src/git
 $ git clone git@github.com:hlrs-vis/multi-object-multi-camera-tracker.git
+$ cd multi-object-multi-camera-tracker
+$ git checkout deep_sort
 ´´´
 
+#### Setup Calibration with MOMC Calibration
+```
+$ workon opencv_cuda
+$ pip install utm
+$ pip install geojson
+$ pip install matplotlib
+```
+##### Intrinsic Calibration
+Brio cameras are already calibrated.
+
+##### Distort Background Image
+``` 
+$ cd /usr/local/src/git/multi-object-multi-camera-tracker
+$ python undistort_image.py -i  calibration/calibration02_i -f /usr/local/src/git/tkDNN/build/calibrationFrame0.jpg
+```
+##### Create Object Points file
+```
+$ touch /usr/local/src/git/tkDNN/build/calibrationFrame0.yml
+$ nano /usr/local/src/git/tkDNN/build/calibrationFrame0.yml
+```
+Manually edit the Points inside. To match the Object Points in World Coordinates. Schema:
+```
+%YAML:1.0
+---
+objp: !!opencv-matrix
+   rows: 4
+   cols: 3
+   dt: d
+   data: [ point1_x, point1_y, 0.,
+        point2_x, point2_y, 0.,
+        point3_x, point3_y, 0.,
+        point4_x, point4_y, 0.,
+       ]
+```
+##### Extrinsic Calibration
+Click at calibration points in the same way the object points and then press enter.
+```
+$ python ImageCoordinatesTool2.py -p /usr/local/src/git/tkDNN/build/calibrationFrame0.jpg
+```
+##### Edit config
+```
+$ nano vhs-calibration/config_vhs_wg_noshow.ini
+```
+Edit the following lines:
+```
+image_pts_path = /usr/local/src/git/tkDNN/build/calibrationFrame0_2024-04-11_1139.yml
+object_pts_path = /usr/local/src/git/tkDNN/build/calibrationFrame0.yml
+calibration_image_path = /usr/local/src/git/tkDNN/build/calibrationFrame0_undistorted.jpg
+```
+##### Export the invHmat
+
+python global_utm_calib.py -p vhs-calibration/config_vhs.in
+
+
+
+
 below is the old README for base dependencies
-
-
 
 # tkDNN 
 tkDNN is a Deep Neural Network library built with cuDNN and tensorRT primitives, specifically thought to work on NVIDIA Jetson Boards. It has been tested on TK1(branch cudnn2), TX1, TX2, AGX Xavier, Nano and several discrete GPUs.
