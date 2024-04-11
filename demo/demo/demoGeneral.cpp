@@ -85,7 +85,6 @@ int main(int argc, char *argv[]){
     int black_output = false;
     int draw_detections = false;
     int inference = true;
-    int csvPort = 0;
     int json_port = 0;
     std::string json_file = std::string();
     std::ofstream jsonfilestream;
@@ -355,7 +354,7 @@ int main(int argc, char *argv[]){
     }
     else writeCsv = false;
     if (writeCsv == true){
-    csv->initiate(det_dir, csvFileStream);
+    csv->initiate(det_dir, csvFileStream, std::to_string(cam_id));
     }
 
     if (write_json || json_port > 0){
@@ -669,7 +668,7 @@ int main(int argc, char *argv[]){
     seqfile<< "imWidth=1920\n";
     seqfile<< "imHeight=1080\n";
     seqfile<< "imExt=.jpg\n";
-    std::cout << "Created Images, detections and seqinfo.ini in:" << new_dir;
+    std::cout << "Created Images, detections and seqinfo.ini in:" << new_dir << "\n";
 
     return 0;
 }
