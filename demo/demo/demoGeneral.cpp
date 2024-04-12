@@ -328,7 +328,7 @@ int main(int argc, char *argv[]){
         jsonfilestream << "[";
     }
     if (save_images == 1) {
-        std::string new_dir = images_path + "Aufnahme" + date;
+        new_dir = images_path + "Aufnahme" + date;
         int dir = mkdir(new_dir.c_str(), 0777);
         if (dir == 0) {
             std::cout << "New folder"  << new_dir << " created." << std::endl;
@@ -336,7 +336,7 @@ int main(int argc, char *argv[]){
         else {
             std::cout << "Failed to create new folder"  << new_dir << std::endl;
         }
-        std::string img_dir = new_dir + "/img1";
+        img_dir = new_dir + "/img1";
         dir = mkdir(img_dir.c_str(), 0777);
         if (dir == 0) {
             std::cout << "New folder"  << img_dir << " created." << std::endl;
@@ -344,7 +344,7 @@ int main(int argc, char *argv[]){
         else {
             std::cout << "Failed to create new folder"  << img_dir << std::endl;
         }
-        std::string det_dir = new_dir + "/det";
+        det_dir = new_dir + "/det";
         dir = mkdir(det_dir.c_str(), 0777);
         if (dir == 0) {
             std::cout << "New folder"  << det_dir << " created." << std::endl;
