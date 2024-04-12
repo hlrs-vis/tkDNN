@@ -18,12 +18,14 @@ void CSVComposer::detectionToCsv(std::vector<TypewithMetadata<cv::Mat>> *batch_i
         for (int i = 0; i < detNN.batchDetected[bi].size(); i++){
             
             b = detNN.batchDetected[bi][i];
-            detClass = detNN.classesNames[b.cl];
-            bX = b.x;
+            // Only save the detection if it is a person
+            if (b.cl == 0){
+                bX = b.x;
             bY = b.y;
             bW = b.w;
             bH = b.h;
             csvFileStream << (*batch_images)[bi].frame_id << ", " << b.cl << ", " << bX << ", " << bY << ", " << bW << ", " << bH << ", " << b.prob << ", " << mycam_id << ", " << std::to_string(std::chrono::duration_cast<std::chrono::milliseconds>(((*batch_images)[bi].time).time_since_epoch()).count()) << "\n";
+            }
         }
 
     }
