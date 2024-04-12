@@ -94,6 +94,9 @@ int main(int argc, char *argv[]){
     bool kafka = false;
     bool tensorflow = false;
     int cam_id = 1;
+    std::string det_dir = std::string();
+    std::string new_dir = std::string();
+    std::string img_dir = std::string();
     std::string images_path = std::string("/media/deep_sort_data/images");
     int save_images = 0;
     std::string net = std::string("yolo4_int8.rt");
@@ -324,29 +327,31 @@ int main(int argc, char *argv[]){
         jsonfilestream.open(json_file);
         jsonfilestream << "[";
     }
-    std::string new_dir = images_path + "Aufnahme" + date;
-    int dir = mkdir(new_dir.c_str(), 0777);
-    if (dir == 0) {
-        std::cout << "New folder"  << new_dir << " created." << std::endl;
-    }
-    else {
-        std::cout << "Failed to create new folder"  << new_dir << std::endl;
-    }
-    std::string img_dir = new_dir + "/img1";
-    dir = mkdir(img_dir.c_str(), 0777);
-    if (dir == 0) {
-        std::cout << "New folder"  << img_dir << " created." << std::endl;
-    }
-    else {
-        std::cout << "Failed to create new folder"  << img_dir << std::endl;
-    }
-    std::string det_dir = new_dir + "/det";
-    dir = mkdir(det_dir.c_str(), 0777);
-    if (dir == 0) {
-        std::cout << "New folder"  << det_dir << " created." << std::endl;
-    }
-    else {
-        std::cout << "Failed to create new folder"  << det_dir << std::endl;
+    if (save_images == 1) {
+        std::string new_dir = images_path + "Aufnahme" + date;
+        int dir = mkdir(new_dir.c_str(), 0777);
+        if (dir == 0) {
+            std::cout << "New folder"  << new_dir << " created." << std::endl;
+        }
+        else {
+            std::cout << "Failed to create new folder"  << new_dir << std::endl;
+        }
+        std::string img_dir = new_dir + "/img1";
+        dir = mkdir(img_dir.c_str(), 0777);
+        if (dir == 0) {
+            std::cout << "New folder"  << img_dir << " created." << std::endl;
+        }
+        else {
+            std::cout << "Failed to create new folder"  << img_dir << std::endl;
+        }
+        std::string det_dir = new_dir + "/det";
+        dir = mkdir(det_dir.c_str(), 0777);
+        if (dir == 0) {
+            std::cout << "New folder"  << det_dir << " created." << std::endl;
+        }
+        else {
+            std::cout << "Failed to create new folder"  << det_dir << std::endl;
+        }
     }
     if (csv_path.size() > 0){
         writeCsv = true;
@@ -659,16 +664,17 @@ int main(int argc, char *argv[]){
                 << COL_END;
     }
     std::cout << COL_GREENB << "Frames overall: " << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
-    std::ofstream seqfile(new_dir + "/seqinfo.ini");
-    seqfile<< "[Sequence]\n";
-    seqfile<< "name="+new_dir.substr((new_dir.find_last_of("/\\"))+1)+"\n";
-    seqfile<< "imDir=img1\n";
-    seqfile<< "frameRate=" << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << "\n";
-    seqfile<< "seqLength="+last_frame+"\n";
-    seqfile<< "imWidth=1920\n";
-    seqfile<< "imHeight=1080\n";
-    seqfile<< "imExt=.jpg\n";
-    std::cout << "Created Images, detections and seqinfo.ini in:" << new_dir << "\n";
-
+    if (save_images == 1) {
+        std::ofstream seqfile(new_dir + "/seqinfo.ini");
+        seqfile<< "[Sequence]\n";
+        seqfile<< "name="+new_dir.substr((new_dir.find_last_of("/\\"))+1)+"\n";
+        seqfile<< "imDir=img1\n";
+        seqfile<< "frameRate=" << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << "\n";
+        seqfile<< "seqLength="+last_frame+"\n";
+        seqfile<< "imWidth=1920\n";
+        seqfile<< "imHeight=1080\n";
+        seqfile<< "imExt=.jpg\n";
+        std::cout << "Created Images, detections and seqinfo.ini in:" << new_dir << "\n";
+    }
     return 0;
 }

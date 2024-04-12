@@ -72,6 +72,7 @@ $ deactivate (if still in opencv_cuda)
 $ sudo pip3 install -U jetson-stats
 $ sudo systemctl restart jtop.service
 $ sudo jtop (test if cuda is working)
+$ sudo apt-get install v4l-utils
 ```
 #### IDS-Peak
 Get debfile from another jetson.
