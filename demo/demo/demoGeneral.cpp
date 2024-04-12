@@ -155,7 +155,7 @@ int main(int argc, char *argv[]){
             if (child.first == "tensorflow")
                 tensorflow = configtree.get<bool>("tkdnn.tensorflow");
             if (child.first == "cam_id")
-                cam_id = configtree.get<bool>("tkdnn.cam_id");
+                cam_id = configtree.get<int>("tkdnn.cam_id");
             if (child.first == "inputnet")
             {
                 net = configtree.get<std::string>("tkdnn.inputnet");
