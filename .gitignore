@@ -25,3 +25,4 @@ scripts/all_labels.txt
 /cmake-build-debug/
 demo/demo/*.jpg
 calibrationimages
+Test*/
