@@ -18,6 +18,9 @@ v4l2-ctl -d 0 -c exposure_auto_priority=1
 v4l2-ctl -d 0 -c backlight_compensation=0
 v4l2-ctl -d 0 -c exposure_auto=1
 v4l2-ctl -d 0 -c exposure_absolute=20
+v4l2-ctl -d 0 -c brightness=100
+v4l2-ctl -d 0 -c gain=128
+v4l2-ctl -d 0 -c sharpness=255
 
 # source /etc/profile.d/idsGigETL_64bit.sh
 cd /usr/local/src/git/tkDNN/build
