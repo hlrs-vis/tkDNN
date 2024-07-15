@@ -237,6 +237,9 @@ int main(int argc, char *argv[]){
                 exposure_min = configtree.get<int>("tkdnn.exposure_min");
             if (child.first == "exposure_max")
                 exposure_max = configtree.get<int>("tkdnn.exposure_max");
+
+
+  
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
