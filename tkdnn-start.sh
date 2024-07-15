@@ -19,5 +19,7 @@ v4l2-ctl -d 0 -c backlight_compensation=0
 v4l2-ctl -d 0 -c exposure_auto=1
 v4l2-ctl -d 0 -c exposure_absolute=20
 
+source /etc/profile.d/idsGigETL_64bit.sh
+
 cd /usr/local/src/tkDNN/build
-./demoGeneral -ini ../config_visagx-brio.ini 
+./demoGeneral -ini ../config_visagx4-brio.ini
