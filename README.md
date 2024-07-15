@@ -10,6 +10,11 @@ This is a fork of [tkDNN](https://github.com/ceccocats/tkDNN) for the project [C
 - queuing of images for for optimal performance in a live setup 
 - end recording on day change, for having one file per day
 
+## Branches
+
+- main - still on TensorRT 7 for old devices
+- tensorrt8-branch - currect branch for new installed devices
+- deepsort - prototype for adding deepsort for subsequent tracking 
 
 # tkDNN
 tkDNN is a Deep Neural Network library built with cuDNN and tensorRT primitives, specifically thought to work on NVIDIA Jetson Boards. It has been tested on TK1(branch cudnn2), TX1, TX2, AGX Xavier, Nano and several discrete GPUs.
