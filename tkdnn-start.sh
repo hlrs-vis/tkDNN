@@ -1,5 +1,14 @@
 #!/bin/bash
 
+#compress existing jsons
+cd /mnt/sd-card/cameradata/json/
+if compgen -G "*.json" > /dev/null; then
+    for f in *.json;
+    do
+       echo tar -czf $f.gz $f --remove-files
+    done
+fi
+
 # Setting camera parameters
 
 v4l2-ctl -d 0 -c focus_auto=0 
@@ -12,13 +21,5 @@ v4l2-ctl -d 0 -c exposure_absolute=20
 
 source /etc/profile.d/idsGigETL_64bit.sh
 
-cd /mnt/sd-card/cameradata/json
-if compgen -G "*.json" > /dev/null; then
-    for f in *.json;
-    do
-       echo tar -czf $f.gz $f --remove-files
-    done
-fi
-
 cd /usr/local/src/tkDNN/build
-./demoGeneral -ini ../config_visagx4-brio.ini 
+./demoGeneral -ini ../config_visagx4-brio.ini

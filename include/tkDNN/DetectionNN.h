@@ -92,7 +92,7 @@ namespace tk
          * @param n_batches maximum number of batches to use in inference
          * @return true if everything is correct, false otherwise.
          */
-        virtual bool init(const std::string& tensor_path, const int n_classes=80, const int n_batches=1, const float conf_thresh=0.3) = 0;
+        virtual bool init(const std::string& tensor_path,const std::string& cfg_path,const std::string& name_path, const int n_classes=80, const int n_batches=1, const float conf_thresh=0.3) = 0;
         
         /**
          * This method performs the whole detection of the NN.
@@ -162,7 +162,7 @@ namespace tk
          * @param frames orginal frame to draw bounding box on.
          * @param ext_yolo exports yolo style coorinates of bounding boxes on the terminal
          */
-            void draw(std::vector<cv::Mat> &frames, bool ext_yolo)
+            void draw(std::vector<cv::Mat> &frames, bool ext_yolo = 0)
             {
                 tk::dnn::box b;
                 int x0, w, x1, y0, h, y1;

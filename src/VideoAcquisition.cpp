@@ -7,7 +7,7 @@ VideoAcquisition::VideoAcquisition()
 
 }
 
-void VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_images, int n_batch)
+bool VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_images, int n_batch)
 {
     int num_elems_removed = 0;
     while (m_queue.size() < n_batch )
@@ -54,6 +54,7 @@ void VideoAcquisition::getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_i
         }
     }
     // std::cout << n_batch << " images retrieved, " << num_elems_removed << " removed, queue size is " << m_queue.size()<< "\n";
+    return m_isRunning;
 }
 
 void VideoAcquisition::flip()

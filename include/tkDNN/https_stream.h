@@ -281,7 +281,7 @@ public:
                 sprintf(head, "--mjpegstream\r\nContent-Type: image/jpeg\r\nContent-Length: %zu\r\n\r\n", outlen);
                 _write(s, head, 0);
                 int n = _write(s, (char*)(&outbuf[0]), outlen);
-                cerr << "known client: " << s << ", sent = " << n << ", must be sent outlen = " << outlen << endl;
+                //cerr << "known client: " << s << ", sent = " << n << ", must be sent outlen = " << outlen << endl;
                 if (n < (int)outlen)
                 {
                     cerr << "MJPG_sender: kill client " << s << endl;
@@ -311,7 +311,7 @@ void send_mjpeg(cv::Mat mat, int port, int timeout, int quality)
         static MJPG_sender wri(port, timeout, quality);
         //cv::Mat mat = cv::cvarrToMat(ipl);
         wri.write(mat);
-        std::cout << " MJPEG-stream sent. \n";
+        //std::cout << " MJPEG-stream sent. \n";
     }
     catch (...) {
         cerr << " Error in send_mjpeg() function \n";

@@ -29,8 +29,6 @@
 #include <boost/algorithm/string.hpp>
 
 bool gRun;
-bool SAVE_RESULT = false;
-
 using namespace boost::property_tree;
 
 void sig_handler(int signo)
@@ -76,6 +74,11 @@ int main(int argc, char *argv[])
     {
         json_parser::read_json(jsonConfig, configtree);
     }
+    
+    int save_video = false;
+    int black_output = false;
+    int draw_detections = false;
+    int inference = true;
 
     int json_port = 0;
     std::string json_file = std::string();
@@ -86,8 +89,8 @@ int main(int argc, char *argv[])
     std::cout << "input_ntype is " << input_ntype << "\n";
     int n_classes = 80;
     int n_batch = 1;
-    int show = 1;
-    int save = 0;
+    int show_video = 0;
+    int send_video = 0;
     int ids = 0;
     int mjpeg_port = 0;
     int extyolo = 0;
@@ -142,10 +145,16 @@ int main(int argc, char *argv[])
                 n_classes = configtree.get<int>("tkdnn.n_classes");
             if (child.first == "n_batch")
                 n_batch = configtree.get<int>("tkdnn.n_batch");
-            if (child.first == "show")
-                show = configtree.get<int>("tkdnn.show");
-            if (child.first == "save")
-                save = configtree.get<int>("tkdnn.save");
+            if (child.first == "show_video")
+                show_video = configtree.get<int>("tkdnn.show_video");
+            if (child.first == "save_video")
+                save_video = configtree.get<int>("tkdnn.save_video");
+            if (child.first == "draw_detections")
+                draw_detections = configtree.get<int>("tkdnn.draw_detections");
+            if (child.first == "black_output")
+                black_output = configtree.get<int>("tkdnn.black_output");
+            if (child.first == "inference")
+                inference = configtree.get<int>("tkdnn.inference");
             if (child.first == "ids")
                 ids = configtree.get<int>("tkdnn.ids");
             if (child.first == "mjpeg_port")
@@ -206,109 +215,19 @@ int main(int argc, char *argv[])
         // std::cout << COL_RED << "JSON_port found.\n" << COL_END;
         }
     }
-    
-    // JSON-Port
-    json_port = find_int_arg(argc, argv, "-json_port", json_port);
-    configtree.put("tkdnn.json_port", json_port);
 
-
-    // JSON-Filename
-    char* jsonfilechar = find_char_arg(argc, argv, "-json_file", "");
-    if (jsonfilechar && jsonfilechar[0]){
-        std::string jsonfile(jsonfilechar);
-        json_file = jsonfile;
-    }
-    configtree.put("tkdnn.json_file", json_file); 
-
-    // Net
-    char* inputnetchar = find_char_arg(argc, argv, "-net", "");
-    std::string inputnet(inputnetchar);
-    if (!inputnet.empty()) 
-        net = inputnet;
-    configtree.put("tkdnn.inputnet", net);   
-
-    // Input 
-    char* inputvideochar = find_char_arg(argc, argv, "-input", "");
-    std::string input(inputvideochar);
-    if (!input.empty())
-        inputvideo = input;
-    configtree.put("tkdnn.inputvideo", inputvideo);   
-
-    //Net-Type  
-    char* input_ntypechar = find_char_arg(argc, argv, "-ntype", " ");
-    char ntype = input_ntypechar[0];
-    if (!isblank(ntype))
-        input_ntype = ntype;
-    configtree.put("tkdnn.ntype", input_ntype);
-    std::cout << "input_ntype is " << input_ntype << "\n";
-
-    n_classes = find_int_arg(argc, argv, "-n_classes", n_classes);
-    configtree.put("tkdnn.n_classes", n_classes);
-    
-    n_batch = find_int_arg(argc, argv, "-n_batch", n_batch);
-    configtree.put("tkdnn.n_batch", n_batch);
-
-    show = find_int_arg(argc, argv, "-show", show);
-    configtree.put("tkdnn.show", show);
-
-    save = find_int_arg(argc, argv, "-save", save);
-    SAVE_RESULT = save;
-    configtree.put("tkdnn.SAVE_RESULT", SAVE_RESULT);
-
-    ids = find_int_arg(argc, argv, "-ids", ids);
-    configtree.put("tkdnn.ids", ids);
-
+    show_video = find_int_arg(argc, argv, "-show_video", show_video);
+    configtree.put("tkdnn.show_video", show_video);
+    save_video = find_int_arg(argc, argv, "-save_video", save_video);
+    configtree.put("tkdnn.save_video", save_video);
+    send_video = find_int_arg(argc, argv, "-send_video", show_video);
+    configtree.put("tkdnn.show_video", show_video);
     mjpeg_port = find_int_arg(argc, argv, "-mjpeg_port", mjpeg_port);
     configtree.put("tkdnn.mjpeg_port", mjpeg_port);
-  
-    extyolo = find_int_arg(argc, argv, "-extyolo", extyolo);
-    configtree.put("tkdnn.extyolo", extyolo);
-
-    video_mode = find_int_arg(argc, argv, "-video_mode", video_mode);
-    configtree.put("tkdnn.video_mode", video_mode);
-
-    frame_rate = find_int_arg(argc, argv, "-frame_rate", frame_rate);
-    configtree.put("tkdnn.frame_rate", frame_rate);
-
-    flip = find_int_arg(argc, argv, "-flip", flip);
-    configtree.put("tkdnn.flip", flip);
-
-    playback = find_int_arg(argc, argv, "-playback", playback);
-    configtree.put("tkdnn.playback", playback);
-
-    save_calibration_images = find_int_arg(argc, argv, "-save_calibration_images", save_calibration_images);
-    configtree.put("tkdnn.save_calibration_images", save_calibration_images);
-
-    generate_background_image = find_int_arg(argc, argv, "-generate_background_image", generate_background_image);
-    configtree.put("tkdnn.generate_background_image", generate_background_image);
-
-    calibration_frames_target = find_int_arg(argc, argv, "-calibration_frames_target", calibration_frames_target);
-    configtree.put("tkdnn.calibration_frames_target", calibration_frames_target);
-
-    calibration_frames_skip_factor = find_int_arg(argc, argv, "-calibration_frames_skip_factor", calibration_frames_skip_factor);
-    configtree.put("tkdnn.calibration_frames_skip_factor", calibration_frames_skip_factor);
-
-    continuous_background_images = find_int_arg(argc, argv, "-continuous_background_images", continuous_background_images);
-    configtree.put("tkdnn.continuous_background_images", continuous_background_images);
-
-
-    // JSON saving folder
-    char* jsonfolderchar = find_char_arg(argc, argv, "-save_json_path", "");
-    if (jsonfolderchar && jsonfolderchar[0]){
-        std::string jsonfolder(jsonfolderchar);
-        save_json_path = jsonfolder;
-    }
-    configtree.put("tkdnn.save_json_path", save_json_path);
-
-
-    // background image  saving folder
-    char* imagefolderchar = find_char_arg(argc, argv, "-save_background_image_path", "");
-    if (imagefolderchar && imagefolderchar[0]){
-        std::string imagefolder(imagefolderchar);
-        save_background_image_path = imagefolder;
-    }
-    configtree.put("tkdnn.save_background_image_path", save_background_image_path);
-
+    draw_detections = find_int_arg(argc, argv, "-draw_detections", draw_detections);
+    configtree.put("tkdnn.draw_detections", draw_detections);
+    black_output = find_int_arg(argc, argv, "-black_output", black_output);
+    configtree.put("tkdnn.black_output", black_output);
 
     if ( iniConfig.empty() && xmlConfig.empty() && jsonConfig.empty() )
     {
@@ -346,11 +265,19 @@ int main(int argc, char *argv[])
         FatalError("Network type not allowed (3rd parameter)\n");
     }
 
-    detNN->init(net, n_classes, n_batch);
+//    detNN->init(net, n_classes, n_batch);
+    detNN->init(net,cfg_input,name_input,n_classes,n_batch,conf_thresh);
+
 
     gRun = true;
 
-bool draw = (show || SAVE_RESULT);
+    if (mjpeg_port > 0)
+    {
+	    send_video = true;
+    }
+
+bool video_output = (show_video || save_video || send_video);
+
 bool write_json;
 
 std::chrono::time_point<std::chrono::system_clock> now = std::chrono::system_clock::now();
@@ -379,6 +306,7 @@ if (json_file.size()>0)
     jsonfilestream.open(json_file);
     jsonfilestream << "[";
 }
+
 
 if (write_json || json_port > 0)
 {
@@ -431,16 +359,20 @@ if (json)
 }
 
     cv::VideoWriter resultVideo;
-    if (SAVE_RESULT)
-    {   /*
-        int w = cap.get(cv::CAP_PROP_FRAME_WIDTH);
-        int h = cap.get(cv::CAP_PROP_FRAME_HEIGHT);
-        resultVideo.open("result.mp4", cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
-        */
+    if (save_video)
+    {   
+        int w = video->getWidth();
+        int h = video->getHeight();
+	std::string resultVideoFile = "Videoresult";
+	resultVideoFile = resultVideoFile.append(date);
+	resultVideoFile = resultVideoFile.append(".mp4");
+        resultVideo.open(resultVideoFile, cv::VideoWriter::fourcc('m', 'p', '4', 'v'), 30, cv::Size(w, h));
+
+        std::cout << "Result video initialized, saving as "  << resultVideoFile << std::endl;
     }
 
     cv::Mat frame;
-    if (show)
+    if (show_video)
     {
         cv::namedWindow("detection", cv::WINDOW_NORMAL);
         cv::moveWindow("detection", 100, 100);
@@ -467,12 +399,12 @@ if (json)
         batch_frame.clear();
         batch_images->clear();
 
-        video->getImages(batch_images, n_batch);
+       gRun = video->getImages(batch_images, n_batch);
         
         for (int bi = 0; bi < n_batch; ++bi)
         {
             // this will be used for the visualisation
-            if (draw || save_calibration_images)
+            if (video_output || save_calibration_images)
                 batch_frame.push_back((*batch_images)[bi].data);
 
             if (generate_background_image)
@@ -495,7 +427,7 @@ if (json)
                         avgImgConverted = H;
                         avgImgConverted.convertTo(avgImgConverted, CV_8UC3, 1.0/calibration_frames_taken);
 
-                        if (show)
+                        if (show_video)
                             cv::imshow("averageConverted", avgImgConverted);
                     }
                 }
@@ -549,7 +481,7 @@ if (json)
                 }
             }
             // this will be resized to the net format
-            if (!draw)
+            if (!video_output)
                 //batch_dnn_input.push_back((*batch_images)[bi].data);
                 batch_dnn_input.push_back(std::move((*batch_images)[bi].data));
             else
@@ -570,11 +502,28 @@ if (json)
         }
 
         //inference
-        detNN->update(batch_dnn_input, n_batch);
-        if (draw)
-            detNN->draw(batch_frame,extyolo);
+        if (inference)
+            detNN->update(batch_dnn_input, n_batch);
 
-        if (show)
+
+	// Video block, images are used for inference/background calculation and will be manipulated for output/visualizationpurposes
+        if (video_output)
+	{
+            if (black_output)
+	    {
+	        for (int bi = 0; bi < n_batch; ++bi)
+                {
+                    batch_frame[bi].setTo(cv::Scalar::all(0));
+                }
+            }
+	
+	if (draw_detections)
+	{
+        if (inference)
+	        detNN->draw(batch_frame,extyolo);
+	}
+
+        if (show_video)
         {
             for (int bi = 0; bi < n_batch; ++bi)
             {
@@ -586,14 +535,21 @@ if (json)
         {
             break;
         }
-        if (n_batch == 1 && SAVE_RESULT)
-            resultVideo << batch_frame[0];
+        if (save_video)
+	{
+            for (int bi = 0; bi < n_batch; ++bi)
+            {
+                resultVideo << batch_frame[bi];
+            }
+            //resultVideo << batch_frame[0];
+	}   
 
         if (mjpeg_port > 0)
         {
             send_mjpeg(batch_frame[0], mjpeg_port, 400000, 40);
         }
-        
+	}
+
         if (write_json || json_port > 0)
         {
             //send_json(batch_images, *detNN, json_port, 40000);
@@ -618,22 +574,24 @@ if (json)
     video->stop();
     jsonfilestream << "]";
     jsonfilestream.close();
+    resultVideo.release();
     long long int frame_id = (*batch_images)[n_batch-1].frame_id;
 
     std::chrono::time_point<std::chrono::system_clock> end_time = std::chrono::system_clock::now();
 
     std::cout << "detection end\n";
     double mean = 0;
-
-    std::cout << COL_GREENB << "\n\nTime stats:\n";
-    std::cout << "Min: " << *std::min_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
-    std::cout << "Max: " << *std::max_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
-    for (int i = 0; i < detNN->stats.size(); i++)
-        mean += detNN->stats[i];
-    mean /= detNN->stats.size();
-    std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
-              << COL_END;
-
+    if (inference)
+    {
+        std::cout << COL_GREENB << "\n\nTime stats:\n";
+        std::cout << "Min: " << *std::min_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
+        std::cout << "Max: " << *std::max_element(detNN->stats.begin(), detNN->stats.end()) / n_batch << " ms\n";
+        for (int i = 0; i < detNN->stats.size(); i++)
+            mean += detNN->stats[i];
+        mean /= detNN->stats.size();
+        std::cout << "Avg: " << mean / n_batch << " ms\t" << 1000 / (mean / n_batch) << " FPS\n"
+                << COL_END;
+    }
     std::cout << COL_GREENB << "Frames overall: " << frames_processed / std::chrono::duration<double>(end_time-start_time).count() << " fps \n" << COL_END;
 
     return 0;

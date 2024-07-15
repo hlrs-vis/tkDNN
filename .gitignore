@@ -20,5 +20,7 @@ cmake-build-minsizerel/*
 scripts/COCO_val2017/*
 scripts/COCO_val2017.zip
 scripts/all_labels.txt
+/cmake/cuda_script
+/cmake-build-debug/
 demo/demo/*.jpg
 calibrationimages

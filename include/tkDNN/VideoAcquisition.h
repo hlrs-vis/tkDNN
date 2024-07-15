@@ -25,7 +25,7 @@ public:
     virtual bool init(std::string, int) = 0;
     virtual int getWidth() = 0;
     virtual int getHeight() = 0;
-    void getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_images, int n_batch);
+    bool getImages(std::vector<TypewithMetadata<cv::Mat>> *batch_images, int n_batch);
     virtual void setFrameRate(int) = 0;
     void flip();
     void setPlayback();

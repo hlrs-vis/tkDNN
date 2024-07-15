@@ -77,7 +77,8 @@ void OpenCVVideoCapture::acquisition_thread()
                 std::this_thread::sleep_for(std::chrono::milliseconds(10));
             }
         }
-        cap >> newframe.data;
+	//cap >> newframe.data;
+	m_isRunning = cap.read(newframe.data);
         if (m_flipped)
             cv::flip(newframe.data, newframe.data, -1);
         newframe.time = std::chrono::system_clock::now();
