@@ -1,3 +1,21 @@
+# CapeReviso Fork of tkDNN
+This is a fork of [tkDNN](https://github.com/ceccocats/tkDNN) for the project [CapeReviso](https://capereviso.hlrs.de/).
+
+## Changes made
+
+- Added scripts, parameters and code to run it with IDS cameras as well as Logitech Brios using a systemd 
+- implement continuous exposure correction
+- calculate privacy friendly background images
+- json output with unix time of each frame
+- queuing of images for for optimal performance in a live setup 
+- end recording on day change, for having one file per day
+
+## Branches
+
+- main - still on TensorRT 7 for old devices
+- tensorrt8-branch - currect branch for new installed devices
+- deepsort - prototype for adding deepsort for subsequent tracking 
+
 # tkDNN
 tkDNN is a Deep Neural Network library built with cuDNN and tensorRT primitives, specifically thought to work on NVIDIA Jetson Boards. It has been tested on TK1(branch cudnn2), TX1, TX2, AGX Xavier, Nano and several discrete GPUs.
 The main goal of this project is to exploit NVIDIA boards as much as possible to obtain the best inference performance. It does not allow training. 
